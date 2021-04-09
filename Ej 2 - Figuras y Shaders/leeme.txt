@@ -1,0 +1,2 @@
+Para los shaders el primero es un zoom al barco y se activa con la letra [Z] (de zoom).
+El segundo shacer es un corte al barco y se activa con la letra [C] (de corte).

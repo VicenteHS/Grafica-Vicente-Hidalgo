@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 200 200" style="enable-background:new 0 0 25 25;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#009CA7;}
+</style>
+<path d="M 20 20 L 40 20 L 50 50 L 60 20 L 80 20 L 60 60 L 40 60 Z 20 20" stroke="black" stroke-width="2" fill="blue" />
+<path d="M 100 60 L 120 60 L 125 50 L 135 50 L 140 60 L 160 60 L 140 20 L 120 20 Z 100 60 M 125 40 L135 40 L 130 30 Z 125 40" stroke="black" stroke-width="2" fill="blue" />
+<path d="M 125 40 L135 40 L 130 30 Z 125 40" stroke="black" stroke-width="2" fill="white" />
+<path d="M 25 140 L40 140 L 40 155 L 60 155 L 60 140 L 75 140 L 75 180 L 60 180 L 60 165 L 40 165 L 40 180 L 25 180 Z 25 140" stroke="black" stroke-width="2" fill="blue" />
+</svg>

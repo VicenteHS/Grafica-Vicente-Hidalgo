@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 200 200" style="enable-background:new 0 0 25 25;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#009CA7;}
+</style>
+<path d="M 20 20 L 40 20 L 50 50 L 60 20 L 80 20 L 60 60 L 40 60 Z 20 20" stroke="black" stroke-width="2" fill="blue" />
+
+<path d="M 100 60 L 120 60 L 125 50 L 135 50 L 140 60 L 160 60 L 140 20 L 120 20 Z 100 60 M 125 40 L135 40 L 130 30 Z 125 40" stroke="black" stroke-width="2" fill="blue" />
+<path d="M 125 40 L135 40 L 130 30 Z 125 40" stroke="black" stroke-width="2" fill="white" />
+
+<path d="M 25 140 L40 140 L 40 155 L 60 155 L 60 140 L 75 140 L 75 180 L 60 180 L 60 165 L 40 165 L 40 180 L 25 180 Z 25 140" stroke="black" stroke-width="2" fill="blue" />
+
+<path d="M 100 180 L 160 180 L 160 155 L 120 155 L 120 145 L 145 145 L 145 150 L 160 150 L 160 140 L 100 140 L 100 165 L 140 165 L 140 175 L 115 175 L 115 170 L 100 170 Z 100 180 " stroke="black" stroke-width="2" fill="blue" />
+
+<path d="M 110 70 L 130 70 L 120 130 Z 110 70" stroke="blue" stroke-width="1" fill="white" />
+<path d="M 120 70 L 120 130" stroke="blue" stroke-width="2" />
+<path d="M 113 85 L 127 85" stroke="blue" stroke-width="2" />
+<text x="112" y="80" fill="red" font-size="10"> C </text>
+<text x="121" y="80" fill="red" font-size="10"> D </text>
+<text x="113" y="93" fill="red" font-size="8"> U </text>
+<text x="121" y="93" fill="red" font-size="8"> C </text>
+
+<path d="M 20 70 L 80 70 L 80 130 L 20 130 Z 20 70" stroke="white" stroke-width="3" fill="black" />
+<circle cx="35" cy="90" r="10" stroke="gray" stroke-width="3" fill="yellow" />
+<circle cx="65" cy="90" r="10" stroke="gray" stroke-width="3" fill="yellow" />
+<path d="M 35 110 L 65 110 L 65 120 L 35 120 Z 35 110" stroke="white" stroke-width="3" fill="white" />
+
+</svg>
