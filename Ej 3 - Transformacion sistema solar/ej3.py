@@ -85,6 +85,62 @@ def createCircleRGB(r,g,b):
 
     return Shape(vertices, indices)
 
+#Funcion para crear las orbitas de los planetas, despues se dibujara con GL lines,
+#por lo que se guardan los indices cada dos.
+
+def createorbita(r,g,b):
+
+    # First vertex at the center, white color
+    vertices = []
+    indices = []
+
+    dtheta = 2 * math.pi / 50
+
+    for i in range(50):
+        theta = i * dtheta
+
+        vertices += [
+            # vertex coordinates
+            0.5 * math.cos(theta), 0.5 * math.sin(theta), 0,
+
+            # color generates varying between 0 and 1
+                  r,       g, b]
+
+        # A triangle is created using the center, this and the next vertex
+        indices += [2*i, 2*i+1]    #Asegurarse de no tomar el primero
+
+    # The final triangle connects back to the second vertex
+
+    return Shape(vertices, indices)
+
+
+def createSilueta(r,g,b):
+
+    # First vertex at the center, white color
+    vertices = []
+    indices = []
+
+    dtheta = 2 * math.pi / 50
+
+    for i in range(50):
+        theta = i * dtheta
+
+        vertices += [
+            # vertex coordinates
+            0.5 * math.cos(theta), 0.5 * math.sin(theta), 0,
+
+            # color generates varying between 0 and 1
+                  r,       g, b]
+
+        # A triangle is created using the center, this and the next vertex
+        indices += [i,i+1]    #Asegurarse de no tomar el primero
+    
+    indices += [49,0]
+
+    # The final triangle connects back to the second vertex
+    return Shape(vertices, indices)
+
+
 
 if __name__ == "__main__":
 
@@ -134,6 +190,19 @@ if __name__ == "__main__":
     gpuCircle3 = es.GPUShape().initBuffers()
     pipeline.setupVAO(gpuCircle3)
     gpuCircle3.fillBuffers(shapeCircle3.vertices, shapeCircle3.indices, GL_STATIC_DRAW)
+
+    #Creando orbita
+    shapeorbitaTierra = createorbita(1,1,1)
+    gpuorbitaTierra = es.GPUShape().initBuffers()
+    pipeline.setupVAO(gpuorbitaTierra)
+    gpuorbitaTierra.fillBuffers(shapeorbitaTierra.vertices, shapeorbitaTierra.indices, GL_STATIC_DRAW)
+
+    #Creando silueta
+    shapeSilueta = createSilueta(1,0,0)
+    gpuSilueta = es.GPUShape().initBuffers()
+    pipeline.setupVAO(gpuSilueta)
+    gpuSilueta.fillBuffers(shapeSilueta.vertices, shapeSilueta.indices, GL_STATIC_DRAW)
+
     #----------------------------------------------------------------------------------------------------
 
     while not glfw.window_should_close(window):
@@ -152,9 +221,47 @@ if __name__ == "__main__":
         # Using the time as the theta parameter
         theta = glfw.get_time()
 
+        
 
 
         #-------------------- TERCER PASO CREAR TRANSFORMACIONES----------------------------------------
+        #Transformacion orbita 1
+        orbitaTransform = tr.matmul([
+            tr.translate(0,0,0),
+            tr.uniformScale(1.4)
+        ])
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, orbitaTransform)
+        pipeline.drawCall(gpuorbitaTierra,GL_LINES)
+
+
+        #Se puede reutilizar la orbita, pues no se cambia el color, solo se transforma
+        #Transformacion orbita 2
+        orbitaTransform2 = tr.matmul([
+            tr.translate(0.7*np.cos(theta), 0.7*np.sin(theta), 0),
+            tr.uniformScale(0.4)
+        ])
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, orbitaTransform2)
+        pipeline.drawCall(gpuorbitaTierra,GL_LINES)
+
+
+        #Transformacion de silueta1 Sol
+        siluetaTransform = tr.matmul([
+            tr.translate(0,0,0),
+            tr.uniformScale(0.41)
+        ])
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, siluetaTransform)
+        pipeline.drawCall(gpuSilueta,GL_LINES)
+
+
+        #Transformacion de silueta2 Tierra
+        siluetaTransform2 = tr.matmul([
+            tr.translate(0.7*np.cos(theta), 0.7*np.sin(theta), 0),
+            tr.uniformScale(0.155)
+        ])
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, siluetaTransform2)
+        pipeline.drawCall(gpuSilueta,GL_LINES)
+
+
         #Transformacion para el sol
         circleTransform2 = tr.matmul([
             tr.translate(0, 0, 0),
@@ -164,6 +271,7 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, circleTransform2)
         pipeline.drawCall(gpuCircle)
 
+
         #Transformacion para la tierra
         circleTransform = tr.matmul([
             tr.translate(0.7*np.cos(theta), 0.7*np.sin(theta), 0),
@@ -172,6 +280,7 @@ if __name__ == "__main__":
         ])
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, circleTransform)
         pipeline.drawCall(gpuCircle2)
+       
 
         #Transformacion para la luna
         circleTransform3 = tr.matmul([
@@ -182,10 +291,15 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, circleTransform3)
         pipeline.drawCall(gpuCircle3)
 
+        
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
         glfw.swap_buffers(window)
 
     # freeing GPU memory
     gpuCircle.clear()
-    
+    gpuCircle2.clear()
+    gpuCircle3.clear()
+    gpuorbitaTierra.clear()
+    gpuSilueta.clear()
+
     glfw.terminate()
