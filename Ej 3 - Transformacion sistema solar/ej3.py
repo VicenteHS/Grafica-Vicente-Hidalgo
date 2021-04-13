@@ -159,26 +159,25 @@ if __name__ == "__main__":
         circleTransform2 = tr.matmul([
             tr.translate(0, 0, 0),
             tr.rotationZ(2 * theta),
-            tr.uniformScale(0.5)
+            tr.uniformScale(0.4)
         ])
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, circleTransform2)
         pipeline.drawCall(gpuCircle)
 
         #Transformacion para la tierra
         circleTransform = tr.matmul([
-            tr.translate(0.5*np.cos(theta), 0.5*np.sin(theta), 0),
+            tr.translate(0.7*np.cos(theta), 0.7*np.sin(theta), 0),
             tr.rotationZ(2 * theta),
-            tr.uniformScale(0.2)
+            tr.uniformScale(0.15)
         ])
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, circleTransform)
         pipeline.drawCall(gpuCircle2)
 
         #Transformacion para la luna
         circleTransform3 = tr.matmul([
-            tr.translate(0.1*np.cos(theta), 0.1*np.sin(theta), 0),
-            tr.translate(0.5*np.cos(theta), 0.5*np.sin(theta), 0),
+            tr.translate(0.7*np.cos(theta) + 0.2*np.cos(2*theta), 0.7*np.sin(theta) + 0.2*np.sin(2*theta), 0),
             tr.rotationZ(2*theta),
-            tr.uniformScale(0.1)
+            tr.uniformScale(0.05)
         ])
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, circleTransform3)
         pipeline.drawCall(gpuCircle3)
