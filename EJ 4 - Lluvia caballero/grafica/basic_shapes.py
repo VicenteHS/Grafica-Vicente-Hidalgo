@@ -1,6 +1,6 @@
 
 # coding=utf-8
-"""Vertices and indices for a variety of simple shapes"""
+"""vertices and indices for a variety of simple shapes"""
 
 import math
 
@@ -122,7 +122,6 @@ def createColorQuad(r, g, b):
 
     return Shape(vertices, indices)
 
-
 def createTextureQuad(nx, ny):
 
     # Defining locations and texture coordinates for each vertex of the shape    
@@ -140,7 +139,6 @@ def createTextureQuad(nx, ny):
          2, 3, 0]
 
     return Shape(vertices, indices)
-
 
 def createRainbowCircle(N):
 
