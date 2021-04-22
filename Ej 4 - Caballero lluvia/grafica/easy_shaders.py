@@ -321,7 +321,6 @@ class SimpleTextureTransformShaderProgram:
         # Unbind the current VAO
         glBindVertexArray(0)
 
-
 class SimpleModelViewProjectionShaderProgram:
 
     def __init__(self):
