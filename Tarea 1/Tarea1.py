@@ -123,21 +123,14 @@ if __name__ == "__main__":
     glfw.set_mouse_button_callback(window, mouse_button_callback)
 
     ####################################################################
-    # Eleccion de pipeline
-    
-    
-    ####################################################################
-    # Enabling transparencies
+    # Cosas varias
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-    glClearColor(0.3, 0.3, 0.3, 1.0)
+    glClearColor(0.0, 0.0, 0.0, 1.0)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
     #glfw.swap_interval(0)
-
-    ####################################################################
-    #Creacion de figuras
 
     #Letras
     # Creating texture with all characters
@@ -145,12 +138,13 @@ if __name__ == "__main__":
     # Moving texture to GPU memory
     gpuText3DTexture = tx.toOpenGLTexture(textBitsTexture)
 
+    ####################################################################
 
-
+    # Creacion de grafo de escena de circulo.
     def createCirculos(pipeline):
-
+        
         # Creacion figura gpu de circulo
-        shapeCirculo = bs.createCircleRGB(30,0.7,0.4,0.2)
+        shapeCirculo = bs.createCircleRGB(30,0.42,0.96,0.91)
         gpuCirculo = es.GPUShape().initBuffers()
         pipeline.setupVAO(gpuCirculo)
         gpuCirculo.fillBuffers(shapeCirculo.vertices, shapeCirculo.indices, GL_STATIC_DRAW)
@@ -175,12 +169,12 @@ if __name__ == "__main__":
         return Circulos
 
 
-        
+    # Creacion de lista con los numeros convertidos a gpuShape   
     def createNumbers(Numeros):
         gpusNumbers = []
         for i in range(len(Numeros)):
             headerText = str(Numeros[i])
-            headerCharSize = 0.1
+            headerCharSize = 0.08
             headerCenterX = headerCharSize * len(headerText) / 2
             headerShape = tx.textToShape(headerText, headerCharSize, headerCharSize)
             gpuHeader = es.GPUShape().initBuffers()
@@ -190,35 +184,12 @@ if __name__ == "__main__":
             gpusNumbers.append(gpuHeader)
         return gpusNumbers
 
-    # def createNumbers(Numeros):
-    #     Numeros = sg.SceneGraphNode("Numeros")
 
-    #     for i in range(len(Numeros)):
-    #         x = random.uniform(-0.75,0.75)
-    #         y = random.uniform(-0.75,0.75)
-
-    #         headerText = str(Numeros[i])
-    #         headerCharSize = 0.1
-    #         headerCenterX = headerCharSize * len(headerText) / 2
-    #         headerShape = tx.textToShape(headerText, headerCharSize, headerCharSize)
-    #         gpuHeader = es.GPUShape().initBuffers()
-    #         textPipeline.setupVAO(gpuHeader)
-    #         gpuHeader.fillBuffers(headerShape.vertices, headerShape.indices, GL_STATIC_DRAW)
-    #         gpuHeader.texture = gpuText3DTexture
-            
-    #         Numeros.childs += [gpuHeader]
-    #         Numeros.transform = tr.translate(x, y, 0)
-
-
-
+    ########################################
+    #Instanciacion de circulos y numeros
     gpusNumbers = createNumbers(Numeros)
     Circulos = createCirculos(pipeline)
-
-
-
-
-
-
+    ########################################
 
 
 
@@ -226,25 +197,30 @@ if __name__ == "__main__":
 
     while not glfw.window_should_close(window):
         glfw.poll_events()
-
         glClear(GL_COLOR_BUFFER_BIT)
-        glUseProgram(textPipeline.shaderProgram)
-        # for i in range (len(gpusNumbers)):
-        #     glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "fontColor"), 1,1,1,0)
-        #     glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "backColor"), 0.5,0.5,0.5,1)
-        #     glUniformMatrix4fv(glGetUniformLocation(textPipeline.shaderProgram, "transform"), 1, GL_TRUE, tr.identity())
-        #     textPipeline.drawCall(gpusNumbers[i])
-
-
-        glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "fontColor"), 1,1,1,0)
-        glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "backColor"), 0.5,0.5,0.5,1)
-        glUniformMatrix4fv(glGetUniformLocation(textPipeline.shaderProgram, "transform"), 1, GL_TRUE, tr.identity())
-        textPipeline.drawCall(gpusNumbers[9])
-
 
 
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(Circulos, pipeline,"transform")
+
+
+
+        
+        glUseProgram(textPipeline.shaderProgram)
+        for i in range (len(gpusNumbers)):
+            AuxCirculo = sg.findNode(Circulos, "Nodo" + str(i) +"trasladado")
+            traslacion = AuxCirculo.transform           #igualar al circulo
+            traslacion2 = tr.translate(-0.08, -0.01, 0) #Ajustar
+            escalamiento = tr.scale(0.8, 1, 1)
+            transformacion = tr.matmul([traslacion2,traslacion,escalamiento,tr.uniformScale(0.5)])
+            glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "fontColor"), 0,0,0,1)
+            glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "backColor"), 0.42,0.96,0.91,1)
+            glUniformMatrix4fv(glGetUniformLocation(textPipeline.shaderProgram, "transform"), 1, GL_TRUE, transformacion)
+            textPipeline.drawCall(gpusNumbers[i])
+
+
+
+        
 
         glfw.swap_buffers(window)
 
