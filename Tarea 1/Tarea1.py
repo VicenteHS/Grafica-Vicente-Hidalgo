@@ -204,18 +204,21 @@ if __name__ == "__main__":
         NodoNumbers = sg.SceneGraphNode("NodoNumbers")
         for i in range(len(gpusNumbers)):
 
+            NodoEscalado = sg.SceneGraphNode("NodoEscalado")
+            NodoEscalado.transform = tr.uniformScale(0.5)
+            NodoEscalado.childs += [gpusNumbers[i]]
+
             #asegurar la misma traslacion que los circulos, por ende hay que cambiar la de los circ nada mas.
             ##################################################################
             AuxCirculo = sg.findNode(Circulos, "Nodo" + str(i) +"trasladado")
             traslacion = AuxCirculo.transform           #igualar al circulo
             traslacion2 = tr.translate(-0.03, -0.02, 0) #Ajustar
-            escalamiento = tr.scale(0.8, 1, 1)
-            transformacion = tr.matmul([traslacion2,traslacion,escalamiento,tr.uniformScale(0.5)])
+            transformacion = tr.matmul([traslacion2,traslacion])
             ##################################################################
 
             newNode = sg.SceneGraphNode("Nodo" + str(i) +"trasladado")
             newNode.transform = transformacion
-            newNode.childs += [gpusNumbers[i]]
+            newNode.childs += [NodoEscalado]
 
             NodoNumbers.childs += [newNode]
         return NodoNumbers
@@ -257,6 +260,8 @@ if __name__ == "__main__":
         glfw.poll_events()
         glClear(GL_COLOR_BUFFER_BIT)
 
+        ##############
+        ##############
         
 
         # Getting the mouse location in opengl coordinates
@@ -273,17 +278,18 @@ if __name__ == "__main__":
         if not controller.agarrado:
             for i in range(len(Numeros)):
                 aux = sg.findNode(Circulos, "Nodo" + str(i) +"trasladado")
+                aux2 = sg.findNode(NodoNumbers, "Nodo" + str(i) +"trasladado")
                 Xo = aux.transform[0][3]
                 Yo = aux.transform[1][3]
                 if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn:
                     controller.agarrado = True
-                    #index = i
                     break
         
 
         if controller.agarrado:
             if controller.leftClickOn:
                 aux.transform = tr.translate(mousePosX, mousePosY, 0)
+                aux2.transform = tr.translate(mousePosX - 0.03, mousePosY - 0.02, 0)
             else:
                 controller.agarrado = False
                     
