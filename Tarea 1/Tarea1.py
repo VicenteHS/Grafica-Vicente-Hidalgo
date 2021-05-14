@@ -17,7 +17,7 @@ import grafica.text_renderer as tx
 # Obtener lista con los valores puestos en el csv
 #usar una textura transparente para reconocer cada uno de los nodos
 
-with open('input3.csv','r') as file:
+with open('input.csv','r') as file:
     file = csv.reader(file)
 
     for line in file:
@@ -37,7 +37,7 @@ class Controller:
     def __init__(self):
         self.leftClickOn = False
         self.mousePos = (0.0, 0.0)
-        
+        self.agarrado = False
         self.fillPolygon = True
     
 
@@ -80,7 +80,7 @@ def mouse_button_callback(window, button, action, mods):
     if (action == glfw.PRESS or action == glfw.REPEAT):
         if (button == glfw.MOUSE_BUTTON_1):
             controller.leftClickOn = True
-            print("por definir")
+
 
         if (button == glfw.MOUSE_BUTTON_2):
             print(glfw.get_cursor_pos(window))
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     width = 900
     height = 900
 
-    window = glfw.create_window(width, height, "ert", None, None)
+    window = glfw.create_window(width, height, "Arbol Binario", None, None)
 
     if not window:
         glfw.terminate()
@@ -159,7 +159,7 @@ if __name__ == "__main__":
         gpuCirculo.fillBuffers(shapeCirculo.vertices, shapeCirculo.indices, GL_DYNAMIC_DRAW)
 
         # Creacion de un Nodo
-        Circulo = sg.SceneGraphNode("Circulo")
+        Circulo = sg.SceneGraphNode("Circulo tr radio")
         Circulo.transform = tr.uniformScale(0.15)
         Circulo.childs += [gpuCirculo]
 
@@ -180,7 +180,7 @@ if __name__ == "__main__":
 
     ########################################
     #Instanciacion de circulos y numeros
-    Color = [0.12,0.16,0.91]                            #Buscar cambiarlo al controlador
+    Color = [0.12,0.16,0.91]
     Circulos = createCirculos(pipeline,Color[0],Color[1],Color[2])
     ########################################
 
@@ -204,14 +204,14 @@ if __name__ == "__main__":
         NodoNumbers = sg.SceneGraphNode("NodoNumbers")
         for i in range(len(gpusNumbers)):
 
-
-
+            #asegurar la misma traslacion que los circulos, por ende hay que cambiar la de los circ nada mas.
+            ##################################################################
             AuxCirculo = sg.findNode(Circulos, "Nodo" + str(i) +"trasladado")
             traslacion = AuxCirculo.transform           #igualar al circulo
             traslacion2 = tr.translate(-0.03, -0.02, 0) #Ajustar
             escalamiento = tr.scale(0.8, 1, 1)
             transformacion = tr.matmul([traslacion2,traslacion,escalamiento,tr.uniformScale(0.5)])
-
+            ##################################################################
 
             newNode = sg.SceneGraphNode("Nodo" + str(i) +"trasladado")
             newNode.transform = transformacion
@@ -221,13 +221,35 @@ if __name__ == "__main__":
         return NodoNumbers
 
     ########################################
-    #Instanciacion de circulos y numeros
+    #Instanciacion numeros
     NodoNumbers = NodoNumbers()
-
     ########################################
 
 
+    # Ajustar tamaño segun el numero de nodos
+    if len(Numeros) >= 80:
+        CircleNode = sg.findNode(Circulos, "Circulo tr radio")
+        CircleNode.transform = tr.uniformScale(0.083)
+    elif len(Numeros) >= 60:
+        CircleNode = sg.findNode(Circulos, "Circulo tr radio")
+        CircleNode.transform = tr.uniformScale(0.095)
+    elif len(Numeros) >= 50:
+        CircleNode = sg.findNode(Circulos, "Circulo tr radio")
+        CircleNode.transform = tr.uniformScale(0.1)
+    elif len(Numeros) >= 40:
+        CircleNode = sg.findNode(Circulos, "Circulo tr radio")
+        CircleNode.transform = tr.uniformScale(0.12)
+    elif len(Numeros) >= 20:
+        CircleNode = sg.findNode(Circulos, "Circulo tr radio")
+        CircleNode.transform = tr.uniformScale(0.15)
 
+
+
+    #Primero se define el radio
+    aux = sg.findNode(Circulos, "Circulo tr radio")
+    Radio = (aux.transform[0][0])/2
+    Radiocuad = Radio**2
+    
 
 
 
@@ -235,26 +257,39 @@ if __name__ == "__main__":
         glfw.poll_events()
         glClear(GL_COLOR_BUFFER_BIT)
 
-        # Ajustar tamaño segun el numero de nodos
-        if len(Numeros) >= 80:
-            CircleNode = sg.findNode(Circulos, "Circulo")
-            CircleNode.transform = tr.uniformScale(0.083)
-        elif len(Numeros) >= 60:
-            CircleNode = sg.findNode(Circulos, "Circulo")
-            CircleNode.transform = tr.uniformScale(0.1)
-        elif len(Numeros) >= 50:
-            CircleNode = sg.findNode(Circulos, "Circulo")
-            CircleNode.transform = tr.uniformScale(0.1)
-        elif len(Numeros) >= 40:
-            CircleNode = sg.findNode(Circulos, "Circulo")
-            CircleNode.transform = tr.uniformScale(0.1)
-        elif len(Numeros) >= 20:
-            CircleNode = sg.findNode(Circulos, "Circulo")
-            CircleNode.transform = tr.uniformScale(0.15)
+        
 
         # Getting the mouse location in opengl coordinates
         mousePosX = 2 * (controller.mousePos[0] - width/2) / width
         mousePosY = 2 * (height/2 - controller.mousePos[1]) / height
+
+
+        #################################################################################
+        #Configurar agarre de nodos
+        #Con el radio definido
+        #Se cumple ecuacion de circulo (x-x0).... xo es la pos del nodo   aux.transform = tr.translate(mousePosX, mousePosY, 0)
+
+
+        if not controller.agarrado:
+            for i in range(len(Numeros)):
+                aux = sg.findNode(Circulos, "Nodo" + str(i) +"trasladado")
+                Xo = aux.transform[0][3]
+                Yo = aux.transform[1][3]
+                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn:
+                    controller.agarrado = True
+                    #index = i
+                    break
+        
+
+        if controller.agarrado:
+            if controller.leftClickOn:
+                aux.transform = tr.translate(mousePosX, mousePosY, 0)
+            else:
+                controller.agarrado = False
+                    
+
+        
+        
 
 
 
@@ -273,7 +308,6 @@ if __name__ == "__main__":
         ########################################
 
     Circulos.clear()
-    for i in range (len(gpusNumbers)):
-        gpusNumbers[i].clear()
+    NodoNumbers.clear()
 
     glfw.terminate()
