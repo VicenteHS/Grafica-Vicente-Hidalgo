@@ -104,3 +104,21 @@ def drawSceneGraphNode(node, pipeline, transformName, parentTransform=tr.identit
         for child in node.childs:
             drawSceneGraphNode(child, pipeline, transformName, newTransform)
 
+
+def drawSceneGraphNodeTEXT(node, pipeline, Color, transformName, parentTransform=tr.identity()):
+    # Composing the transformations through this path
+    newTransform = np.matmul(parentTransform, node.transform)
+
+    if len(node.childs) == 1 and isinstance(node.childs[0], gs.GPUShape):
+        leaf = node.childs[0]
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, transformName), 1, GL_TRUE, newTransform)
+        pipeline.drawCall(leaf)
+
+        glUniform4f(glGetUniformLocation(pipeline.shaderProgram, "fontColor"), 0,0,0,1)
+        glUniform4f(glGetUniformLocation(pipeline.shaderProgram, "backColor"), Color[0],Color[1],Color[2],1)
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, transformName), 1, GL_TRUE, newTransform)
+        pipeline.drawCall(leaf)
+
+    else:
+        for child in node.childs:
+            drawSceneGraphNodeTEXT(child, pipeline, Color, transformName,newTransform)

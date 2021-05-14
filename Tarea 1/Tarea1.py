@@ -15,6 +15,7 @@ import grafica.text_renderer as tx
 
 ########################################################################
 # Obtener lista con los valores puestos en el csv
+#usar una textura transparente para reconocer cada uno de los nodos
 
 with open('input3.csv','r') as file:
     file = csv.reader(file)
@@ -142,7 +143,12 @@ if __name__ == "__main__":
     gpuText3DTexture = tx.toOpenGLTexture(textBitsTexture)
 
     ####################################################################
-
+    ####################################################################
+    ####################################################################
+    ####################################################################
+    ####################################################################
+    ####################################################################
+    ####################################################################
     # Creacion de grafo de escena de circulo.
     def createCirculos(pipeline,r,g,b):
         #0.42,0.96,0.91 <- color de prueba
@@ -172,6 +178,12 @@ if __name__ == "__main__":
         return Circulos
 
 
+    ########################################
+    #Instanciacion de circulos y numeros
+    Color = [0.12,0.16,0.91]                            #Buscar cambiarlo al controlador
+    Circulos = createCirculos(pipeline,Color[0],Color[1],Color[2])
+    ########################################
+
     # Creacion de lista con los numeros convertidos a gpuShape   
     def createNumbers(Numeros):
         gpusNumbers = []
@@ -186,14 +198,34 @@ if __name__ == "__main__":
             gpuHeader.texture = gpuText3DTexture
             gpusNumbers.append(gpuHeader)
         return gpusNumbers
+    
+    def NodoNumbers():
+        gpusNumbers = createNumbers(Numeros)
+        NodoNumbers = sg.SceneGraphNode("NodoNumbers")
+        for i in range(len(gpusNumbers)):
 
+
+
+            AuxCirculo = sg.findNode(Circulos, "Nodo" + str(i) +"trasladado")
+            traslacion = AuxCirculo.transform           #igualar al circulo
+            traslacion2 = tr.translate(-0.03, -0.02, 0) #Ajustar
+            escalamiento = tr.scale(0.8, 1, 1)
+            transformacion = tr.matmul([traslacion2,traslacion,escalamiento,tr.uniformScale(0.5)])
+
+
+            newNode = sg.SceneGraphNode("Nodo" + str(i) +"trasladado")
+            newNode.transform = transformacion
+            newNode.childs += [gpusNumbers[i]]
+
+            NodoNumbers.childs += [newNode]
+        return NodoNumbers
 
     ########################################
     #Instanciacion de circulos y numeros
-    Color = [0.12,0.16,0.91]                            #Buscar cambiarlo al controlador
-    gpusNumbers = createNumbers(Numeros)
-    Circulos = createCirculos(pipeline,Color[0],Color[1],Color[2])
+    NodoNumbers = NodoNumbers()
+
     ########################################
+
 
 
 
@@ -204,41 +236,41 @@ if __name__ == "__main__":
         glClear(GL_COLOR_BUFFER_BIT)
 
         # Ajustar tamaño segun el numero de nodos
-        if len(Numeros) >= 75:
+        if len(Numeros) >= 80:
             CircleNode = sg.findNode(Circulos, "Circulo")
             CircleNode.transform = tr.uniformScale(0.083)
+        elif len(Numeros) >= 60:
+            CircleNode = sg.findNode(Circulos, "Circulo")
+            CircleNode.transform = tr.uniformScale(0.1)
         elif len(Numeros) >= 50:
             CircleNode = sg.findNode(Circulos, "Circulo")
             CircleNode.transform = tr.uniformScale(0.1)
-        elif len(Numeros) >= 25:
+        elif len(Numeros) >= 40:
+            CircleNode = sg.findNode(Circulos, "Circulo")
+            CircleNode.transform = tr.uniformScale(0.1)
+        elif len(Numeros) >= 20:
             CircleNode = sg.findNode(Circulos, "Circulo")
             CircleNode.transform = tr.uniformScale(0.15)
 
+        # Getting the mouse location in opengl coordinates
+        mousePosX = 2 * (controller.mousePos[0] - width/2) / width
+        mousePosY = 2 * (height/2 - controller.mousePos[1]) / height
 
-        # Muestra de Circulos
+
+
+        ########################################
+        ########################################
+        ########################################
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(Circulos, pipeline,"transform")
 
-
-
-        # Trabajo la muestra de numeros
         glUseProgram(textPipeline.shaderProgram)
-        for i in range (len(gpusNumbers)):
-            AuxCirculo = sg.findNode(Circulos, "Nodo" + str(i) +"trasladado")
-            traslacion = AuxCirculo.transform           #igualar al circulo
-            traslacion2 = tr.translate(-0.03, -0.02, 0) #Ajustar
-            escalamiento = tr.scale(0.8, 1, 1)
-            transformacion = tr.matmul([traslacion2,traslacion,escalamiento,tr.uniformScale(0.5)])
-            glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "fontColor"), 0,0,0,1)
-            glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "backColor"), Color[0],Color[1],Color[2],1)
-            glUniformMatrix4fv(glGetUniformLocation(textPipeline.shaderProgram, "transform"), 1, GL_TRUE, transformacion)
-            textPipeline.drawCall(gpusNumbers[i])
-
-
-
-        
+        sg.drawSceneGraphNodeTEXT(NodoNumbers, textPipeline, Color, "transform")
 
         glfw.swap_buffers(window)
+        ########################################
+        ########################################
+        ########################################
 
     Circulos.clear()
     for i in range (len(gpusNumbers)):
