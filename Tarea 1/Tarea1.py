@@ -170,7 +170,7 @@ if __name__ == "__main__":
         for i in range(len(Numeros)):
             x = random.uniform(-0.75,0.75)
             y = random.uniform(-0.75,0.75)
-            newNode = sg.SceneGraphNode("Nodo" + str(i) +"trasladado")
+            newNode = sg.SceneGraphNode("CNodo" + str(i) +"trasladado")
             newNode.transform = tr.translate(x,y,0)
             newNode.childs += [Circulo]
 
@@ -180,7 +180,7 @@ if __name__ == "__main__":
 
 
     ########################################
-    #Instanciacion de circulos y numeros
+    #Instanciacion Color
     Color = [0.12,0.16,0.91]
     Circulos = createCirculos(pipeline,Color[0],Color[1],Color[2])
     ########################################
@@ -212,7 +212,7 @@ if __name__ == "__main__":
 
             #asegurar la misma traslacion que los circulos, por ende hay que cambiar la de los circ nada mas.
             ##################################################################
-            AuxCirculo = sg.findNode(Circulos, "Nodo" + str(i) +"trasladado")
+            AuxCirculo = sg.findNode(Circulos, "CNodo" + str(i) +"trasladado")
             traslacion = AuxCirculo.transform           #igualar al circulo
             traslacion2 = tr.translate(-0.03, -0.02, 0) #Ajustar
             transformacion = tr.matmul([traslacion2,traslacion])
@@ -225,33 +225,41 @@ if __name__ == "__main__":
             NodoNumbers.childs += [newNode]
         return NodoNumbers
 
+
+
     ########################################
-    #Instanciacion numeros
     NodoNumbers = NodoNumbers()
     ########################################
+    
+    ########################################
+    #Instanciacion
+    NodoDef = sg.SceneGraphNode("NodoDef")
+    NodoDef.childs += [Circulos,NodoNumbers]
+    ########################################
+    
 
 
     # Ajustar tamaño segun el numero de nodos
     if len(Numeros) >= 80:
-        CircleNode = sg.findNode(Circulos, "Circulo tr radio")
+        CircleNode = sg.findNode(NodoDef, "Circulo tr radio")
         CircleNode.transform = tr.uniformScale(0.083)
     elif len(Numeros) >= 60:
-        CircleNode = sg.findNode(Circulos, "Circulo tr radio")
+        CircleNode = sg.findNode(NodoDef, "Circulo tr radio")
         CircleNode.transform = tr.uniformScale(0.095)
     elif len(Numeros) >= 50:
-        CircleNode = sg.findNode(Circulos, "Circulo tr radio")
+        CircleNode = sg.findNode(NodoDef, "Circulo tr radio")
         CircleNode.transform = tr.uniformScale(0.1)
     elif len(Numeros) >= 40:
-        CircleNode = sg.findNode(Circulos, "Circulo tr radio")
+        CircleNode = sg.findNode(NodoDef, "Circulo tr radio")
         CircleNode.transform = tr.uniformScale(0.12)
     elif len(Numeros) >= 20:
-        CircleNode = sg.findNode(Circulos, "Circulo tr radio")
+        CircleNode = sg.findNode(NodoDef, "Circulo tr radio")
         CircleNode.transform = tr.uniformScale(0.15)
 
 
 
     #Primero se define el radio
-    aux = sg.findNode(Circulos, "Circulo tr radio")
+    aux = sg.findNode(NodoDef, "Circulo tr radio")
     Radio = (aux.transform[0][0])/2
     Radiocuad = Radio**2
     
@@ -279,8 +287,8 @@ if __name__ == "__main__":
 
         if not controller.agarrado:
             for i in range(len(Numeros)):
-                aux = sg.findNode(Circulos, "Nodo" + str(i) +"trasladado")
-                aux2 = sg.findNode(NodoNumbers, "Nodo" + str(i) +"trasladado")
+                aux = sg.findNode(NodoDef, "CNodo" + str(i) +"trasladado")
+                aux2 = sg.findNode(NodoDef, "Nodo" + str(i) +"trasladado")
                 Xo = aux.transform[0][3]
                 Yo = aux.transform[1][3]
                 if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn:
@@ -302,10 +310,7 @@ if __name__ == "__main__":
         ########################################
         ########################################
 
-        sg.drawSceneGraphNodeDefinitivo(Circulos, pipeline, textPipeline, Color, "transform")
-
-
-        sg.drawSceneGraphNodeDefinitivo(NodoNumbers, pipeline, textPipeline, Color, "transform")
+        sg.drawSceneGraphNodeDefinitivo(NodoDef, pipeline, textPipeline, Color, "transform")
         glfw.swap_buffers(window)
         ########################################
         ########################################
@@ -315,33 +320,6 @@ if __name__ == "__main__":
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-        ########################################
-        ########################################
-        ########################################
-        # glUseProgram(pipeline.shaderProgram)
-        # sg.drawSceneGraphNodeD(Circulos, pipeline,"transform")
-
-        # glUseProgram(textPipeline.shaderProgram)
-        # sg.drawSceneGraphNodeTEXT(NodoNumbers, textPipeline, Color, "transform")
-
-        # glfw.swap_buffers(window)
-        ########################################
-        ########################################
-        ########################################
-
-    Circulos.clear()
-    NodoNumbers.clear()
+    NodoDef.clear()
 
     glfw.terminate()
