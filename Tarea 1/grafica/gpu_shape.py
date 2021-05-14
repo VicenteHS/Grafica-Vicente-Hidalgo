@@ -21,6 +21,7 @@ class GPUShape:
         self.ebo = None
         self.texture = None
         self.size = None
+        self.shader = 0
 
     def initBuffers(self):
         """Convenience function for initialization of OpenGL buffers.

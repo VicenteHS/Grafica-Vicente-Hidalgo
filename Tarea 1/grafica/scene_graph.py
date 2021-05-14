@@ -111,8 +111,6 @@ def drawSceneGraphNodeTEXT(node, pipeline, Color, transformName, parentTransform
 
     if len(node.childs) == 1 and isinstance(node.childs[0], gs.GPUShape):
         leaf = node.childs[0]
-        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, transformName), 1, GL_TRUE, newTransform)
-        pipeline.drawCall(leaf)
 
         glUniform4f(glGetUniformLocation(pipeline.shaderProgram, "fontColor"), 0,0,0,1)
         glUniform4f(glGetUniformLocation(pipeline.shaderProgram, "backColor"), Color[0],Color[1],Color[2],1)
@@ -122,3 +120,29 @@ def drawSceneGraphNodeTEXT(node, pipeline, Color, transformName, parentTransform
     else:
         for child in node.childs:
             drawSceneGraphNodeTEXT(child, pipeline, Color, transformName,newTransform)
+
+
+#Orden pipeline 1 = Simple, pipeline 2 = Texto pipeline 3 = Textura
+#Completar con texture con pipeline 3 en leaf.shader == 3.
+def drawSceneGraphNodeDefinitivo(node, pipeline1, pipeline2, Color, transformName, parentTransform = tr.identity()):
+    newTransform = np.matmul(parentTransform, node.transform)
+
+    if len(node.childs) == 1 and isinstance(node.childs[0], gs.GPUShape):
+        leaf = node.childs[0]
+        if leaf.shader == 1:
+            glUseProgram(pipeline1.shaderProgram)
+            glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, transformName), 1, GL_TRUE, newTransform)
+            pipeline1.drawCall(leaf)
+
+        elif leaf.shader == 2:
+            glUseProgram(pipeline2.shaderProgram)
+            glUniform4f(glGetUniformLocation(pipeline2.shaderProgram, "fontColor"), 0,0,0,1)
+            glUniform4f(glGetUniformLocation(pipeline2.shaderProgram, "backColor"), Color[0],Color[1],Color[2],1)
+            glUniformMatrix4fv(glGetUniformLocation(pipeline2.shaderProgram, transformName), 1, GL_TRUE, newTransform)
+            pipeline2.drawCall(leaf)
+
+        elif leaf.shader == 3:
+            pass
+    else:
+        for child in node.childs:
+            drawSceneGraphNodeDefinitivo(child, pipeline1, pipeline2, Color, transformName, newTransform)

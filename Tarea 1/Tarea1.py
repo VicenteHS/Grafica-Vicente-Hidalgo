@@ -157,6 +157,7 @@ if __name__ == "__main__":
         gpuCirculo = es.GPUShape().initBuffers()
         pipeline.setupVAO(gpuCirculo)
         gpuCirculo.fillBuffers(shapeCirculo.vertices, shapeCirculo.indices, GL_DYNAMIC_DRAW)
+        gpuCirculo.shader = 1
 
         # Creacion de un Nodo
         Circulo = sg.SceneGraphNode("Circulo tr radio")
@@ -195,6 +196,7 @@ if __name__ == "__main__":
             gpuHeader = es.GPUShape().initBuffers()
             textPipeline.setupVAO(gpuHeader)
             gpuHeader.fillBuffers(headerShape.vertices, headerShape.indices, GL_DYNAMIC_DRAW)
+            gpuHeader.shader = 2
             gpuHeader.texture = gpuText3DTexture
             gpusNumbers.append(gpuHeader)
         return gpusNumbers
@@ -296,19 +298,45 @@ if __name__ == "__main__":
 
         
         
-
-
-
         ########################################
         ########################################
         ########################################
-        glUseProgram(pipeline.shaderProgram)
-        sg.drawSceneGraphNode(Circulos, pipeline,"transform")
 
-        glUseProgram(textPipeline.shaderProgram)
-        sg.drawSceneGraphNodeTEXT(NodoNumbers, textPipeline, Color, "transform")
+        sg.drawSceneGraphNodeDefinitivo(Circulos, pipeline, textPipeline, Color, "transform")
 
+
+        sg.drawSceneGraphNodeDefinitivo(NodoNumbers, pipeline, textPipeline, Color, "transform")
         glfw.swap_buffers(window)
+        ########################################
+        ########################################
+        ########################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        ########################################
+        ########################################
+        ########################################
+        # glUseProgram(pipeline.shaderProgram)
+        # sg.drawSceneGraphNodeD(Circulos, pipeline,"transform")
+
+        # glUseProgram(textPipeline.shaderProgram)
+        # sg.drawSceneGraphNodeTEXT(NodoNumbers, textPipeline, Color, "transform")
+
+        # glfw.swap_buffers(window)
         ########################################
         ########################################
         ########################################
