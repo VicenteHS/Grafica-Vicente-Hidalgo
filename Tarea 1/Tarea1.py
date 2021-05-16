@@ -39,6 +39,7 @@ class Controller:
         self.mousePos = (0.0, 0.0)
         self.agarrado = False
         self.fillPolygon = True
+        self.clic = False
     
 
 controller = Controller()
@@ -80,6 +81,7 @@ def mouse_button_callback(window, button, action, mods):
     if (action == glfw.PRESS or action == glfw.REPEAT):
         if (button == glfw.MOUSE_BUTTON_1):
             controller.leftClickOn = True
+            controller.clic = not controller.clic
 
 
         if (button == glfw.MOUSE_BUTTON_2):
@@ -137,9 +139,7 @@ if __name__ == "__main__":
     #glfw.swap_interval(0)
 
     # Letras
-    # Creating texture with all characters
     textBitsTexture = tx.generateTextBitsTexture()
-    # Moving texture to GPU memory
     gpuText3DTexture = tx.toOpenGLTexture(textBitsTexture)
 
     ####################################################################
@@ -149,41 +149,9 @@ if __name__ == "__main__":
     ####################################################################
     ####################################################################
     ####################################################################
-    # Creacion de grafo de escena de circulo.
-    def createCirculos(pipeline,r,g,b):
-        #0.42,0.96,0.91 <- color de prueba
-        # Creacion figura gpu de circulo
-        shapeCirculo = bs.createCircleRGB(30,r,g,b)
-        gpuCirculo = es.GPUShape().initBuffers()
-        pipeline.setupVAO(gpuCirculo)
-        gpuCirculo.fillBuffers(shapeCirculo.vertices, shapeCirculo.indices, GL_DYNAMIC_DRAW)
-        gpuCirculo.shader = 1
-
-        # Creacion de un Nodo
-        Circulo = sg.SceneGraphNode("Circulo tr radio")
-        Circulo.transform = tr.uniformScale(0.15)
-        Circulo.childs += [gpuCirculo]
-
-        # Creacion de todos los nodos de Numeros
-        Circulos = sg.SceneGraphNode("Circulos")
-        
-        for i in range(len(Numeros)):
-            x = random.uniform(-0.75,0.75)
-            y = random.uniform(-0.75,0.75)
-            newNode = sg.SceneGraphNode("CNodo" + str(i) +"trasladado")
-            newNode.transform = tr.translate(x,y,0)
-            newNode.childs += [Circulo]
-
-            Circulos.childs += [newNode]
-
-        return Circulos
-
-
-    ########################################
-    #Instanciacion Color
-    Color = [0.12,0.16,0.91]
-    Circulos = createCirculos(pipeline,Color[0],Color[1],Color[2])
-    ########################################
+    # Colores
+    Color = [0.6,0.2,0.8]
+    Color2 = [0.0,1.0,0.0]
 
     # Creacion de lista con los numeros convertidos a gpuShape   
     def createNumbers(Numeros):
@@ -200,61 +168,82 @@ if __name__ == "__main__":
             gpuHeader.texture = gpuText3DTexture
             gpusNumbers.append(gpuHeader)
         return gpusNumbers
-    
-    def NodoNumbers():
-        gpusNumbers = createNumbers(Numeros)
-        NodoNumbers = sg.SceneGraphNode("NodoNumbers")
-        for i in range(len(gpusNumbers)):
+
+    # Instanciacion
+    gpusNumbers = createNumbers(Numeros)
+
+    # Creacion de nodo definitivo
+    def NodoDefinitivo():
+        #Creacion de circulo gpu
+        shapeCirculo = bs.createCircleRGB(30,Color[0],Color[1],Color[2])
+        gpuCirculo = es.GPUShape().initBuffers()
+        pipeline.setupVAO(gpuCirculo)
+        gpuCirculo.fillBuffers(shapeCirculo.vertices, shapeCirculo.indices, GL_DYNAMIC_DRAW)
+        gpuCirculo.shader = 1
+
+        # Creacion de un Nodo radio
+        Circulo = sg.SceneGraphNode("Circulo tr radio")
+        Circulo.transform = tr.uniformScale(1)
+        Circulo.childs += [gpuCirculo]
+
+        Nodos = sg.SceneGraphNode("Nodos")
+        for i in range(len(Numeros)):
+            x = random.uniform(-0.75,0.75)
+            y = random.uniform(-0.75,0.75)
+            CirculoTrasladado = sg.SceneGraphNode("CNodo" + str(i) +"trasladado")
+            CirculoTrasladado.transform = tr.translate(x,y,0)
+            CirculoTrasladado.childs += [Circulo]
 
             NodoEscalado = sg.SceneGraphNode("NodoEscalado")
             NodoEscalado.transform = tr.uniformScale(0.5)
             NodoEscalado.childs += [gpusNumbers[i]]
 
-            #asegurar la misma traslacion que los circulos, por ende hay que cambiar la de los circ nada mas.
-            ##################################################################
-            AuxCirculo = sg.findNode(Circulos, "CNodo" + str(i) +"trasladado")
-            traslacion = AuxCirculo.transform           #igualar al circulo
-            traslacion2 = tr.translate(-0.03, -0.02, 0) #Ajustar
-            transformacion = tr.matmul([traslacion2,traslacion])
-            ##################################################################
+            NodoTrasladado = sg.SceneGraphNode("Nodo" + str(i) +"trasladado")
+            NodoTrasladado.transform = tr.matmul([tr.translate(x,y,0),tr.translate(-0.03, -0.02, 0)])
+            NodoTrasladado.childs += [NodoEscalado]
 
-            newNode = sg.SceneGraphNode("Nodo" + str(i) +"trasladado")
-            newNode.transform = transformacion
-            newNode.childs += [NodoEscalado]
+            Nodo = sg.SceneGraphNode("Nodo" + str(i))
+            Nodo.childs += [CirculoTrasladado,NodoTrasladado]
 
-            NodoNumbers.childs += [newNode]
-        return NodoNumbers
+            Nodos.childs +=[Nodo]
+        return Nodos
 
 
 
-    ########################################
-    NodoNumbers = NodoNumbers()
-    ########################################
-    
+ 
+
     ########################################
     #Instanciacion
-    NodoDef = sg.SceneGraphNode("NodoDef")
-    NodoDef.childs += [Circulos,NodoNumbers]
+    NodoDef = NodoDefinitivo()
     ########################################
     
 
 
     # Ajustar tamaño segun el numero de nodos
     if len(Numeros) >= 80:
+        largo = 0.09
         CircleNode = sg.findNode(NodoDef, "Circulo tr radio")
-        CircleNode.transform = tr.uniformScale(0.083)
+        CircleNode.transform = tr.uniformScale(largo)
     elif len(Numeros) >= 60:
+        largo = 0.095
         CircleNode = sg.findNode(NodoDef, "Circulo tr radio")
-        CircleNode.transform = tr.uniformScale(0.095)
+        CircleNode.transform = tr.uniformScale(largo)
     elif len(Numeros) >= 50:
+        largo = 0.1
         CircleNode = sg.findNode(NodoDef, "Circulo tr radio")
-        CircleNode.transform = tr.uniformScale(0.1)
+        CircleNode.transform = tr.uniformScale(largo)
     elif len(Numeros) >= 40:
+        largo = 0.12
         CircleNode = sg.findNode(NodoDef, "Circulo tr radio")
-        CircleNode.transform = tr.uniformScale(0.12)
+        CircleNode.transform = tr.uniformScale(largo)
     elif len(Numeros) >= 20:
+        largo = 0.15
         CircleNode = sg.findNode(NodoDef, "Circulo tr radio")
-        CircleNode.transform = tr.uniformScale(0.15)
+        CircleNode.transform = tr.uniformScale(largo)
+    else:
+        largo = 0.2
+        CircleNode = sg.findNode(NodoDef, "Circulo tr radio")
+        CircleNode.transform = tr.uniformScale(largo)
 
 
 
@@ -264,15 +253,30 @@ if __name__ == "__main__":
     Radiocuad = Radio**2
     
 
+    ##########################################################
+    #Creacion Circulo seleccionado
+    def createNodoCircleRGB(N,Color):
+        shapeCircSelect = bs.createCircleRGB(N,Color[0],Color[1],Color[2])
+        gpuCircSelect = es.GPUShape().initBuffers()
+        pipeline.setupVAO(gpuCircSelect)
+        gpuCircSelect.fillBuffers(shapeCircSelect.vertices, shapeCircSelect.indices, GL_DYNAMIC_DRAW)
+        gpuCircSelect.shader = 1
+
+        Circ = sg.SceneGraphNode("Circ tr radio")
+        Circ.transform = tr.uniformScale(largo)
+        Circ.childs += [gpuCircSelect]
+
+        return Circ
+
+    CirculoBlanco = createNodoCircleRGB(30, Color)
+    CirculoVerde = createNodoCircleRGB(30, Color2)
+
+
 
 
     while not glfw.window_should_close(window):
         glfw.poll_events()
         glClear(GL_COLOR_BUFFER_BIT)
-
-        ##############
-        ##############
-        
 
         # Getting the mouse location in opengl coordinates
         mousePosX = 2 * (controller.mousePos[0] - width/2) / width
@@ -284,17 +288,32 @@ if __name__ == "__main__":
         #Con el radio definido
         #Se cumple ecuacion de circulo (x-x0).... xo es la pos del nodo   aux.transform = tr.translate(mousePosX, mousePosY, 0)
 
+        ########################################
+        ########################################
+        ########################################
+
+
 
         if not controller.agarrado:
             for i in range(len(Numeros)):
+                index = i
                 aux = sg.findNode(NodoDef, "CNodo" + str(i) +"trasladado")
                 aux2 = sg.findNode(NodoDef, "Nodo" + str(i) +"trasladado")
                 Xo = aux.transform[0][3]
                 Yo = aux.transform[1][3]
                 if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn:
                     controller.agarrado = True
+                    aux.click = not aux.click
+                    
                     break
         
+        if aux.click:
+            aux.childs = [CirculoVerde]
+            gpusNumbers[index].shader = 3
+
+        elif not aux.click:
+            aux.childs = [CirculoBlanco]
+            gpusNumbers[index].shader = 2
 
         if controller.agarrado:
             if controller.leftClickOn:
@@ -302,15 +321,18 @@ if __name__ == "__main__":
                 aux2.transform = tr.translate(mousePosX - 0.03, mousePosY - 0.02, 0)
             else:
                 controller.agarrado = False
-                    
-
-        
-        
         ########################################
         ########################################
         ########################################
 
-        sg.drawSceneGraphNodeDefinitivo(NodoDef, pipeline, textPipeline, Color, "transform")
+
+
+
+        
+        ########################################
+        ########################################
+        ########################################
+        sg.drawSceneGraphNodeDefinitivo(NodoDef, pipeline, textPipeline, Color,Color2,"transform")
         glfw.swap_buffers(window)
         ########################################
         ########################################

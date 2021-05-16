@@ -22,6 +22,7 @@ class SceneGraphNode:
         self.name = name
         self.transform = tr.identity()
         self.childs = []
+        self.click = False
 
     def clear(self):
         """Freeing GPU memory"""
@@ -122,9 +123,9 @@ def drawSceneGraphNodeTEXT(node, pipeline, Color, transformName, parentTransform
             drawSceneGraphNodeTEXT(child, pipeline, Color, transformName,newTransform)
 
 
-#Orden pipeline 1 = Simple, pipeline 2 = Texto pipeline 3 = Textura
+#Orden pipeline 1 = Simple, pipeline 2 = Texto pipeline 3 = Texto color 2
 #Completar con texture con pipeline 3 en leaf.shader == 3.
-def drawSceneGraphNodeDefinitivo(node, pipeline1, pipeline2, Color, transformName, parentTransform = tr.identity()):
+def drawSceneGraphNodeDefinitivo(node, pipeline1, pipeline2, Color,Color2, transformName, parentTransform = tr.identity()):
     newTransform = np.matmul(parentTransform, node.transform)
 
     if len(node.childs) == 1 and isinstance(node.childs[0], gs.GPUShape):
@@ -142,7 +143,11 @@ def drawSceneGraphNodeDefinitivo(node, pipeline1, pipeline2, Color, transformNam
             pipeline2.drawCall(leaf)
 
         elif leaf.shader == 3:
-            pass
+            glUseProgram(pipeline2.shaderProgram)
+            glUniform4f(glGetUniformLocation(pipeline2.shaderProgram, "fontColor"), 0,0,0,1)
+            glUniform4f(glGetUniformLocation(pipeline2.shaderProgram, "backColor"), Color2[0],Color2[1],Color2[2],1)
+            glUniformMatrix4fv(glGetUniformLocation(pipeline2.shaderProgram, transformName), 1, GL_TRUE, newTransform)
+            pipeline2.drawCall(leaf)
     else:
         for child in node.childs:
-            drawSceneGraphNodeDefinitivo(child, pipeline1, pipeline2, Color, transformName, newTransform)
+            drawSceneGraphNodeDefinitivo(child, pipeline1, pipeline2, Color,Color2, transformName, newTransform)
