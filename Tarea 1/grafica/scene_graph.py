@@ -23,6 +23,8 @@ class SceneGraphNode:
         self.transform = tr.identity()
         self.childs = []
         self.click = False
+        self.click2 = False
+        self.valor = 0
 
     def clear(self):
         """Freeing GPU memory"""
