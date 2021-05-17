@@ -6,6 +6,7 @@ import OpenGL.GL.shaders
 import numpy as np
 import grafica.transformations as tr
 import grafica.gpu_shape as gs
+import glfw
 
 __author__ = "Daniel Calderon"
 __license__ = "MIT"
@@ -162,6 +163,12 @@ def drawSceneGraphNodeDefinitivo(node, pipeline1, pipeline2, pipeline3, Color,Co
             glUseProgram(pipeline3.shaderProgram)
             glUniformMatrix4fv(glGetUniformLocation(pipeline3.shaderProgram, transformName), 1, GL_TRUE, newTransform)
             pipeline3.drawCall(leaf)
+
+        elif leaf.shader == 6:
+            theta = glfw.get_time()
+            glUseProgram(pipeline1.shaderProgram)
+            glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, transformName), 1, GL_TRUE, tr.matmul([newTransform,tr.shearing(0.2*np.cos(theta), 0, 0, 0, 0, 0)]))
+            pipeline1.drawCall(leaf)
     else:
         for child in node.childs:
             drawSceneGraphNodeDefinitivo(child, pipeline1, pipeline2,pipeline3, Color,Color2, Color3, transformName, newTransform)

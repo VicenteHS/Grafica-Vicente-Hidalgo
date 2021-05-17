@@ -53,6 +53,7 @@ class Controller:
         self.elegir = False
         self.error = False
         self.arreglar = False
+        self.hint = False
     
 
 controller = Controller()
@@ -64,11 +65,12 @@ def on_key(window, key, scancode, action, mods):
     
     global controller
 
-    if key == glfw.KEY_SPACE:
-        controller.fillPolygon = not controller.fillPolygon
 
-    elif key == glfw.KEY_ESCAPE:
+    if key == glfw.KEY_ESCAPE:
         glfw.set_window_should_close(window, True)
+    
+    elif key == glfw.KEY_H:
+        controller.hint = not controller.hint
 
     else:
         print('Unknown key')
@@ -315,9 +317,23 @@ if __name__ == "__main__":
         Circ.childs += [gpuCircSelect]
 
         return Circ
+    
+    def createNodoCircleRGBShearing(N,Color):
+        shapeCircSelect = bs.createCircleRGB(N,Color[0],Color[1],Color[2])
+        gpuCircSelect = es.GPUShape().initBuffers()
+        pipeline.setupVAO(gpuCircSelect)
+        gpuCircSelect.fillBuffers(shapeCircSelect.vertices, shapeCircSelect.indices, GL_DYNAMIC_DRAW)
+        gpuCircSelect.shader = 6
+
+        Circ = sg.SceneGraphNode("Circ tr radio")
+        Circ.transform = tr.uniformScale(largo)
+        Circ.childs += [gpuCircSelect]
+
+        return Circ
     ##########
-    CirculoBlanco = createNodoCircleRGB(30, Color)
+    CirculoMorado = createNodoCircleRGB(30, Color)
     CirculoVerde = createNodoCircleRGB(30, Color2)
+    CirculoShearing = createNodoCircleRGBShearing(30, Color3)
     ##########
 
 
@@ -381,30 +397,19 @@ if __name__ == "__main__":
 
 
 
-
-
-
-    # for i in range(len(Numeros)):
-    #     index = i
-    #     aux = sg.findNode(NodoDef, "CNodo" + str(i) +"trasladado")
-    #     aux2 = sg.findNode(NodoDef, "Nodo" + str(i) +"trasladado")
-    #     Xo = aux.transform[0][3]
-    #     Yo = aux.transform[1][3]
-    #     tupla = [Xo,Yo]
-    #     PosicionesNodos.append (tupla)
-
-
-
-
-
-
-
+    def mediana(L):
+        L.sort()
+        mitad = int(len(L)/2)
+        return L[mitad]
+    
+    MedianaValores = mediana(Valores)
 
     # Encontrar posiciones de nodos.
     PosicionesNodos = []
     IndicesUsados = []
     NodosUsados = []
     Indice = -1
+    contadorespecial = -1
 
     while not glfw.window_should_close(window):
         glfw.poll_events()
@@ -430,7 +435,8 @@ if __name__ == "__main__":
                 aux2 = sg.findNode(NodoDef, "Nodo" + str(i) +"trasladado")
                 Xo = aux.transform[0][3]
                 Yo = aux.transform[1][3]
-
+                
+                # Se presenta el error 
                 if controller.error:
                     time.sleep(0.2)
                     sg.findNode(NodoError, "Nodo Error Trasladado").transform = tr.translate(0.0, -2.0, 0)
@@ -504,6 +510,21 @@ if __name__ == "__main__":
                     controller.agarrado = True
                     break
 
+                #Esto es para activar el hint del valor medio
+                if controller.hint:
+                    
+                    if sg.findNode(NodoDef,"Nodo" + str(i)).valores == MedianaValores:
+                        aux.childs = [CirculoShearing]
+                        gpusNumbers[index].shader = 4
+                        contadorespecial = 25
+                if not controller.hint and contadorespecial == 25:
+                    if sg.findNode(NodoDef,"Nodo" + str(i)).valores == MedianaValores:
+                        aux.childs = [CirculoMorado]
+                        gpusNumbers [index].shader = 2
+                        contadorespecial = -1
+                
+
+
 
 
 
@@ -523,7 +544,7 @@ if __name__ == "__main__":
             gpusNumbers[index].shader = 3
             aux.childs[0].transform = tr.uniformScale(0.25)
         if not aux.click:
-            aux.childs = [CirculoBlanco]
+            aux.childs = [CirculoMorado]
             gpusNumbers [index].shader = 2
 
         
@@ -538,12 +559,14 @@ if __name__ == "__main__":
             controller.elegir = False
             sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").click = False
             sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").click2 = False
-            sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").childs = [CirculoBlanco]
+            sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").childs = [CirculoMorado]
             gpusNumbers [Indice].shader = 2
-            sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").childs = [CirculoBlanco]
+            sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").childs = [CirculoMorado]
             gpusNumbers [Indice2].shader = 2
             Indice = -1
             Indice2 = -1
+
+
 
 
 
@@ -566,7 +589,7 @@ if __name__ == "__main__":
 
 
 
-
+    NodoError.clear()
     NodoDef.clear()
 
     glfw.terminate()
