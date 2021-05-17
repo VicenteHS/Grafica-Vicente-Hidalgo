@@ -20,6 +20,9 @@ import time
 # Obtener lista con los valores puestos en el csv
 # REVISAR PROBLEMAS CON EL 99!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 
+
+#sys.argv[1]
+#INPUT = sys.argv[2]
 with open('input.csv','r') as file:
     file = csv.reader(file)
 
@@ -56,6 +59,7 @@ class Controller:
         self.hint = False
         self.linea = False
         self.linea2 = False
+        self.PrimerCaso = True
 
 class Arbol:
     def __init__(self,contador):
@@ -232,7 +236,7 @@ if __name__ == "__main__":
             CirculoTrasladado.childs += [Circulo]
 
             NodoEscalado = sg.SceneGraphNode("NodoEscalado")
-            NodoEscalado.transform = tr.uniformScale(0.5)
+            NodoEscalado.transform = tr.scale(0.45, 0.5, 0)
             NodoEscalado.childs += [gpusNumbers[i]]
 
             NodoTrasladado = sg.SceneGraphNode("Nodo" + str(i) +"trasladado")
@@ -398,7 +402,7 @@ if __name__ == "__main__":
     MedianaValores = mediana(Valores)
 
     # Encontrar posiciones de nodos.
-    PosicionesNodos = []
+    ValoresUsados = []
     IndicesUsados = []
     iUsados = []
     Indice = -1
@@ -415,7 +419,6 @@ if __name__ == "__main__":
         ########################################
         ########################################
 
-
         if not controller.agarrado:
             for i in range(len(Numeros)):
                 index = i
@@ -423,8 +426,7 @@ if __name__ == "__main__":
                 aux2 = sg.findNode(NodoDef, "Nodo" + str(i) +"trasladado")
                 Xo = aux.transform[0][3]
                 Yo = aux.transform[1][3]
-                
-                # Se presenta el error 
+
                 if controller.error:
                     time.sleep(1.0)
                     sg.findNode(NodoError, "Nodo Error Trasladado").transform = tr.translate(0.0, -2.0, 0)
@@ -439,22 +441,53 @@ if __name__ == "__main__":
                     NODO2Valores = NODO2.valores
                     b = sg.findNode(NodoDef, "CNodo" + str(Indice2) +"trasladado")
 
+                    # EMPIEZA INSERTAR POR LA IZQUIERDA                    <-
                     # Se afirma que el nodo1 es menor al nodo2
                     if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and mousePosX < Xo and controller.rightClickOn and i == Indice2:
-                        if NODO1Valores < NODO2Valores:
-                            #Ver si la linea ya esta dibujada
+                        if NODO1Valores < NODO2Valores:    
                             if not [Indice,Indice2] in IndicesUsados and not b.lineaIzquierda:
                                 controller.linea = True
                                 IndicesUsados.append([Indice,Indice2])
                                 IndicesUsados.append([Indice2,Indice])
                                 iUsados.append(Indice)
                                 iUsados.append(Indice2)
-
+                                controller.PrimerCaso = False
                             controller.arreglar = True
                             time.sleep(0.2)
                             break
+                            
+                            # Insertar arbol Sup
+                            # elif not NODO2Valores in :
+                            #     #Ver si la linea ya esta dibujada
+                            #     if not [Indice,Indice2] in IndicesUsados and not b.lineaIzquierda:
+                            #         controller.linea = True
+                            #         IndicesUsados.append([Indice,Indice2])
+                            #         IndicesUsados.append([Indice2,Indice])
+                            #         iUsados.append(Indice)
+                            #         iUsados.append(Indice2)
+                            #         controller.PrimerCaso = False
+                            #     controller.arreglar = True
+                            #     time.sleep(0.2)
+                            #     break
 
 
+                            # Insertar arbol Inf
+                            # if ValoresUsados[ValoresUsados.index(NODO2Valores) -1] < NODO1Valores:
+                            #     #Ver si la linea ya esta dibujada
+                            #     if not [Indice,Indice2] in IndicesUsados and not b.lineaIzquierda:
+                            #         controller.linea = True
+                            #         IndicesUsados.append([Indice,Indice2])
+                            #         IndicesUsados.append([Indice2,Indice])
+                            #         iUsados.append(Indice)
+                            #         iUsados.append(Indice2)
+                            #         controller.PrimerCaso = False
+                            #     controller.arreglar = True
+                            #     time.sleep(0.2)
+                            #     break
+                            
+                            # NO dejar por problemas de pos
+
+                        #ERROR
                         if NODO1Valores > NODO2Valores:
                             controller.arreglar = True
                             controller.error = True
@@ -463,26 +496,68 @@ if __name__ == "__main__":
                             break
                             
 
+
+
+                    #EMPIEZA INSERTAR POR DERECHA <-
+
+
+
                     # Se afirma que el nodo2 es menor al nodo1
                     if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and mousePosX > Xo and controller.rightClickOn and i == Indice2:
+                        #Error
                         if NODO1Valores < NODO2Valores:
                             controller.arreglar = True
                             controller.error = True
                             sg.findNode(NodoError, "Nodo Error Trasladado").transform = tr.translate(0.0, 2.0, 0)
                             time.sleep(0.2)
                             break
+            
                         if NODO1Valores > NODO2Valores:
-                            #Ver si la linea ya esta dibujada
+
                             if not [Indice,Indice2] in IndicesUsados and not b.lineaDerecha:
-                                controller.linea2 = True
+                                controller.linea = True
                                 IndicesUsados.append([Indice,Indice2])
                                 IndicesUsados.append([Indice2,Indice])
                                 iUsados.append(Indice)
                                 iUsados.append(Indice2)
-
+                                controller.PrimerCaso = False
                             controller.arreglar = True
                             time.sleep(0.2)
                             break
+
+
+
+                            # if not NODO2Valores in ValoresUsados:
+                            #     print("hola")
+                            #     #Ver si la linea ya esta dibujada
+                            #     if not [Indice,Indice2] in IndicesUsados and not b.lineaDerecha:
+                            #         controller.linea2 = True
+                            #         IndicesUsados.append([Indice,Indice2])
+                            #         IndicesUsados.append([Indice2,Indice])
+                            #         iUsados.append(Indice)
+                            #         iUsados.append(Indice2)
+                            #         controller.PrimerCaso = False
+                            #     controller.arreglar = True
+                            #     time.sleep(0.2)
+                            #     break
+
+                            # #Insertar Arbol Inf
+                            # if ValoresUsados[ValoresUsados.index(NODO2Valores) +1] > NODO1Valores:
+                            #     print("caso que deberia dejar der")
+                            #     #Ver si la linea ya esta dibujada
+                            #     if not [Indice,Indice2] in IndicesUsados and not b.lineaDerecha:
+                            #         controller.linea2 = True
+                            #         IndicesUsados.append([Indice,Indice2])
+                            #         IndicesUsados.append([Indice2,Indice])
+                            #         iUsados.append(Indice)
+                            #         iUsados.append(Indice2)
+                            #         controller.PrimerCaso = False
+                            #     controller.arreglar = True
+                            #     time.sleep(0.2)
+                            #     break
+
+
+
 
 
 
@@ -584,7 +659,7 @@ if __name__ == "__main__":
             y2 = b.transform[1][3]
             c = sg.findNode(NodoDef, "Nodos")
             b.lineaDerecha = True
-            a.PadreDerecho = True
+            a.PadreIzquierdo = True
             gpuLineaNodo = createGpuLineaNodo(x,y,x2,y2,Color[0],Color[1],Color[2])
             c.childs += [gpuLineaNodo]
         
