@@ -51,6 +51,7 @@ class Controller:
         self.fillPolygon = True
         self.marcado = False
         self.elegir = False
+        self.error = False
     
 
 controller = Controller()
@@ -338,12 +339,34 @@ if __name__ == "__main__":
         NodoTexturaDesplazado.transform = tr.translate(largo/2, -largo/2, 0)
         NodoTexturaDesplazado.childs += [NodoTextura]
         return NodoTexturaDesplazado
+
     
+
+
+
     ##########
     NodoTextura = createNodoTexture()
     ##########
 
+    def createNodoError():
+        cuadText = bs.createTextureQuadBig(1,1)
+        gpuError = GPUShape().initBuffers()
+        texturePipeline.setupVAO(gpuError)
+        gpuError.fillBuffers(cuadText.vertices, cuadText.indices, GL_DYNAMIC_DRAW)
+        gpuError.shader = 5
+        gpuError.texture = es.textureSimpleSetup(
+            getAssetPath("Error.png"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+            
+        NodoError = sg.SceneGraphNode("Nodo Error")
+        NodoError.transform = tr.shearing(0.01,0.01, 0, 0, 0, 0)
+        NodoError.childs += [gpuError]
 
+        NodoErrorTrasladado = sg.SceneGraphNode("Nodo Error Trasladado")
+        NodoErrorTrasladado.transform = tr.translate(0.0,0.0,0.0)
+        NodoErrorTrasladado.childs += [NodoError]
+
+        return NodoErrorTrasladado
+    NodoError = createNodoError()    
 
     
 
@@ -390,6 +413,9 @@ if __name__ == "__main__":
         mousePosX = 2 * (controller.mousePos[0] - width/2) / width
         mousePosY = 2 * (height/2 - controller.mousePos[1]) / height
 
+        
+
+
 
         ########################################
         ########################################
@@ -404,15 +430,58 @@ if __name__ == "__main__":
                 Xo = aux.transform[0][3]
                 Yo = aux.transform[1][3]
 
-
+                if controller.error:
+                    time.sleep(0.2)
+                    sg.findNode(NodoError, "Nodo Error Trasladado").transform = tr.translate(0.0, -2.0, 0)
+                    controller.error = False
                 
                 if controller.elegir:
-                    if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and mousePosY < Xo and controller.rightClickOn and i == Indice2:
-                        print("hola")
-                        time.sleep(0.2)
-                    if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and mousePosY > Xo and controller.rightClickOn and i == Indice2:
-                        print("chao")
-                        time.sleep(0.2)
+                    # Se encuentran los valores de los nodos
+                    NODO1 = sg.findNode(NodoDef,"Nodo" + str(Indice))
+                    NODO1Valores = NODO1.valores
+                    NODO2 = sg.findNode(NodoDef,"Nodo" + str(Indice2))
+                    NODO2Valores = NODO2.valores
+
+                    # Se afirma que el nodo1 es menor al nodo2
+                    if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and mousePosX < Xo and controller.rightClickOn and i == Indice2:
+                        if NODO1Valores < NODO2Valores:
+                            print("bien hecho")
+                            controller.marcado = False
+                            controller.elegir = False
+                            sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").click = False
+                            sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").click2 = False
+                            time.sleep(0.2)
+                            break
+                        if NODO1Valores > NODO2Valores:
+                            controller.marcado = False
+                            controller.elegir = False
+                            sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").click = False
+                            sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").click2 = False
+                            controller.error = True
+                            sg.findNode(NodoError, "Nodo Error Trasladado").transform = tr.translate(0.0, 2.0, 0)
+                            time.sleep(0.2)
+                            break
+                            
+
+                    # Se afirma que el nodo2 es menor al nodo1
+                    if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and mousePosX > Xo and controller.rightClickOn and i == Indice2:
+                        if NODO1Valores < NODO2Valores:
+                            controller.marcado = False
+                            controller.elegir = False
+                            sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").click = False
+                            sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").click2 = False
+                            controller.error = True
+                            sg.findNode(NodoError, "Nodo Error Trasladado").transform = tr.translate(0.0, 2.0, 0)
+                            time.sleep(0.2)
+                            break
+                        if NODO1Valores > NODO2Valores:
+                            print("bien hecho")
+                            controller.marcado = False
+                            controller.elegir = False
+                            sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").click = False
+                            sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").click2 = False
+                            time.sleep(0.2)
+                            break
 
 
 
@@ -424,17 +493,6 @@ if __name__ == "__main__":
                     time.sleep(0.2)
                     break
 
-
-                    # #Se encuentra el nodoActual
-                    # NodoActual = sg.findNode(NodoDef,"Nodo" + str(i))
-                    # ValorActual = NodoActual.valores
-                    # print(ValorActual)
-
-                    # #Se encuentra el nodoAnterior
-                    # NodoAnterior = sg.findNode(NodoDef,"Nodo" + str(Indice))
-                    # ValorAnterior = NodoAnterior.valores
-                    # print(ValorAnterior)
-                    # time.sleep(0.2)
 
                 # Esto es para despintar el pintado
                 if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.rightClickOn and i == Indice and controller.marcado and not controller.elegir:
@@ -456,10 +514,6 @@ if __name__ == "__main__":
                 if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn:
                     controller.agarrado = True
                     break
-
-                # if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn and controller.elegir:
-                #     controller.agarrado = True
-                #     break
 
 
 
@@ -489,23 +543,14 @@ if __name__ == "__main__":
                 aux.childs = [NodoTextura]
                 gpusNumbers[index].shader = 4
 
-
-
- 
-
         ########################################
         ########################################
         ########################################
-
         
-        
-        ########################################
-        ########################################
-        ########################################
-        #sg.drawSceneGraphNodeDefinitivo(NodoTextura, pipeline, textPipeline, texturePipeline, Color, Color2, Color3, "transform")
         sg.drawSceneGraphNodeDefinitivo(NodoDef, pipeline, textPipeline,texturePipeline, Color,Color2, Color3,"transform")
+        sg.drawSceneGraphNodeDefinitivo(NodoError, pipeline, textPipeline, texturePipeline, Color, Color2, Color3, "transform")
         
-        
+
         glfw.swap_buffers(window)
 
 
