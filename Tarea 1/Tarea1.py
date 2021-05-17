@@ -54,6 +54,17 @@ class Controller:
         self.error = False
         self.arreglar = False
         self.hint = False
+        self.linea = False
+        self.linea2 = False
+
+class Arbol:
+    def __init__(self,contador):
+        self.Raiz = None
+        self.Der = None
+        self.izq = None
+        self.LineaDer = None
+        self.LineaIzq = None
+        self.contador = contador
     
 
 controller = Controller()
@@ -362,12 +373,47 @@ if __name__ == "__main__":
         NodoErrorTrasladado.childs += [NodoError]
 
         return NodoErrorTrasladado
-    NodoError = createNodoError()    
+    NodoError = createNodoError()
+
+    def createGpuLineaNodo(pto1x,pto1y,pto2x,pto2y,r,g,b):
+        shapeLinea = bs.createLinea(pto1x,pto1y,pto2x,pto2y,r,g,b)
+        gpuLinea = GPUShape().initBuffers()
+        pipeline.setupVAO(gpuLinea)
+        gpuLinea.fillBuffers(shapeLinea.vertices, shapeLinea.indices, GL_DYNAMIC_DRAW)
+        gpuLinea.shader = 7
+
+        gpulineaNodo = sg.SceneGraphNode("GpuLineaNodo")
+        gpulineaNodo.childs += [gpuLinea]
+
+        return gpulineaNodo
+
+
+
 
     
+#------------------------------------------------------------------------------------#
+    # def createNodoArbol(Nodo1, Nodo2):
+    #     NodoInfArbol = sg.SceneGraphNode("Nodo Inf Arbol")
+    #     NodoInfArbol.transform = tr.identity()
+    #     NodoInfArbol.childs += [Nodo1]
 
+    #     NodoInfArbolTrasladado = sg.SceneGraphNode("Nodo Inf Arbol Trasladado")
+    #     NodoInfArbolTrasladado.transform = tr.translate(-0.3, -0.3, 0)
+    #     NodoInfArbolTrasladado.childs += [NodoInfArbol]
 
+    #     NodoSupArbol = sg.SceneGraphNode("Nodo Sup Arbol")
+    #     NodoSupArbol.transform = tr.identity()
+    #     NodoSupArbol.childs += [Nodo2]
 
+    #     NodoSupTrasladado = sg.SceneGraphNode("Nodo Sup Arbol Trasladado")
+    #     NodoSupTrasladado.transform = tr.identity()
+    #     NodoSupTrasladado.childs += [NodoSupTrasladado]
+
+    #     NodoArbol = sg.SceneGraphNode("Nodo Arbol")
+    #     NodoArbol.transform = tr.identity()
+    #     NodoArbol.childs += [NodoInfArbolTrasladado,NodoSupTrasladado]
+
+    #     return NodoArbol
 
 
 
@@ -407,10 +453,11 @@ if __name__ == "__main__":
                 
                 # Se presenta el error 
                 if controller.error:
-                    time.sleep(0.2)
+                    time.sleep(1.0)
                     sg.findNode(NodoError, "Nodo Error Trasladado").transform = tr.translate(0.0, -2.0, 0)
                     controller.error = False
                 
+                # LO MAS IMPORTANTE OCURRE AQUI, FORMAR EL ARBOL
                 if controller.elegir:
                     # Se encuentran los valores de los nodos
                     NODO1 = sg.findNode(NodoDef,"Nodo" + str(Indice))
@@ -418,13 +465,24 @@ if __name__ == "__main__":
                     NODO2 = sg.findNode(NodoDef,"Nodo" + str(Indice2))
                     NODO2Valores = NODO2.valores
 
+                    a = sg.findNode(NodoDef, "CNodo" + str(Indice) +"trasladado")
+                    x = a.transform[0][3] + largo/2
+                    y = a.transform[1][3]
+                    b = sg.findNode(NodoDef, "CNodo" + str(Indice2) +"trasladado")
+                    x2 = b.transform[0][3] -largo/2
+                    y2 = b.transform[1][3]
+                    c = sg.findNode(NodoDef, "Nodos")
+
                     # Se afirma que el nodo1 es menor al nodo2
                     if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and mousePosX < Xo and controller.rightClickOn and i == Indice2:
                         if NODO1Valores < NODO2Valores:
                             print("bien hecho")
+                            controller.linea = True
                             controller.arreglar = True
                             time.sleep(0.2)
                             break
+
+
                         if NODO1Valores > NODO2Valores:
                             controller.arreglar = True
                             controller.error = True
@@ -443,6 +501,7 @@ if __name__ == "__main__":
                             break
                         if NODO1Valores > NODO2Valores:
                             print("bien hecho")
+                            controller.linea2 = True
                             controller.arreglar = True
                             time.sleep(0.2)
                             break
@@ -478,6 +537,7 @@ if __name__ == "__main__":
                 if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn:
                     controller.agarrado = True
                     break
+
 
                 #Esto es para activar el hint del valor medio
                 if controller.hint:
@@ -516,16 +576,32 @@ if __name__ == "__main__":
             aux.childs = [CirculoMorado]
             gpusNumbers [index].shader = 2
 
-        
+        # Esto es dps del break de pintar la textura
         if controller.elegir:
             if aux.click2:
                 aux.childs = [NodoTextura]
                 gpusNumbers[index].shader = 4
         
+        # Dibujar linea
+        if controller.linea:
+            gpuLineaNodo = createGpuLineaNodo(x,y,x2,y2,Color[0],Color[1],Color[2])
+            c.childs += [gpuLineaNodo]
+
+
+        if controller.linea2:
+            x = a.transform[0][3] - largo/2
+            x2 = b.transform[0][3] +largo/2
+            gpuLineaNodo = createGpuLineaNodo(x,y,x2,y2,Color[0],Color[1],Color[2])
+            c.childs += [gpuLineaNodo]
+        
+
+        # Volver a morado
         if controller.arreglar:
             controller.arreglar = False
             controller.marcado = False
             controller.elegir = False
+            controller.linea = False
+            controller.linea2 = False
             sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").click = False
             sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").click2 = False
             sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").childs = [CirculoMorado]
@@ -534,6 +610,7 @@ if __name__ == "__main__":
             gpusNumbers [Indice2].shader = 2
             Indice = -1
             Indice2 = -1
+        
 
 
 

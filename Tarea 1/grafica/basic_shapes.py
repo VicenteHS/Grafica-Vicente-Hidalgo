@@ -69,6 +69,23 @@ def createAxis(length=1.0):
     return Shape(vertices, indices)
 
 
+
+def createLinea(pto1x,pto1y,pto2x,pto2y,r,g,b):
+
+    # Defining the location and colors of each vertex  of the shape
+    vertices = [
+    #    positions        colors
+        pto1x,  pto1y,-1.0,  r,g,b,
+        pto2x,  pto2y,-1.0,  r,g,b]
+
+
+    indices = [
+         0, 1]
+    return Shape(vertices, indices)
+
+
+
+
 def createRainbowTriangle():
 
     # Defining the location and colors of each vertex  of the shape

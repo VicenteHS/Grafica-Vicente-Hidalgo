@@ -26,6 +26,8 @@ class SceneGraphNode:
         self.click = False
         self.click2 = False
         self.valor = 0
+        self.linea = False
+        self.linea2 = False
 
     def clear(self):
         """Freeing GPU memory"""
@@ -169,6 +171,12 @@ def drawSceneGraphNodeDefinitivo(node, pipeline1, pipeline2, pipeline3, Color,Co
             glUseProgram(pipeline1.shaderProgram)
             glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, transformName), 1, GL_TRUE, tr.matmul([newTransform,tr.shearing(0.2*np.cos(theta), 0, 0, 0, 0, 0)]))
             pipeline1.drawCall(leaf)
+
+        elif leaf.shader == 7:
+            glUseProgram(pipeline1.shaderProgram)
+            glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, transformName), 1, GL_TRUE, newTransform)
+            glLineWidth(10)
+            pipeline1.drawCall(leaf, GL_LINES)
     else:
         for child in node.childs:
             drawSceneGraphNodeDefinitivo(child, pipeline1, pipeline2,pipeline3, Color,Color2, Color3, transformName, newTransform)
