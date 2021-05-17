@@ -161,11 +161,6 @@ if __name__ == "__main__":
     gpuText3DTexture = tx.toOpenGLTexture(textBitsTexture)
 
 
-
-
-
-
-
     ####################################################################
     ####################################################################
     ####################################################################
@@ -179,12 +174,6 @@ if __name__ == "__main__":
     Color2 = [0.0,1.0,0.0]
     Color3 = [1.0,1.0,1.0]
     ##########
-
-
-
-
-
-
 
     # Creacion de lista con los numeros convertidos a gpuShape   
     def createNumbers(Numeros):
@@ -206,10 +195,6 @@ if __name__ == "__main__":
     # Instanciacion
     gpusNumbers = createNumbers(Numeros)
     ##########
-
-
-
-
 
 
 
@@ -259,9 +244,6 @@ if __name__ == "__main__":
 
 
 
-
-
-
     # Ajustar tamaño segun el numero de nodos
     if len(Numeros) >= 80:
         largo = 0.09
@@ -293,9 +275,6 @@ if __name__ == "__main__":
     Radio = (aux.transform[0][0])/2
     Radiocuad = Radio**2
     ##########
-
-
-
 
 
 
@@ -392,11 +371,6 @@ if __name__ == "__main__":
 
 
 
-
-
-
-
-
     def mediana(L):
         L.sort()
         mitad = int(len(L)/2)
@@ -418,11 +392,6 @@ if __name__ == "__main__":
         # Getting the mouse location in opengl coordinates
         mousePosX = 2 * (controller.mousePos[0] - width/2) / width
         mousePosY = 2 * (height/2 - controller.mousePos[1]) / height
-
-        
-
-
-
         ########################################
         ########################################
         ########################################
