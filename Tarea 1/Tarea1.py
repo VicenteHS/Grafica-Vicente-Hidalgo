@@ -417,7 +417,7 @@ if __name__ == "__main__":
 
 
                 # Esto es para formar el arbol
-                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.rightClickOn and i != Indice and controller.marcado:
+                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.rightClickOn and i != Indice and controller.marcado and not controller.elegir:
                     Indice2 = i
                     aux.click2 = True
                     controller.elegir = True
@@ -453,13 +453,13 @@ if __name__ == "__main__":
                     break
 
                 #Esto es para mover
-                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn and not controller.elegir:
+                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn:
                     controller.agarrado = True
                     break
 
-                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn and controller.elegir:
-                    controller.agarrado = True
-                    break
+                # if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn and controller.elegir:
+                #     controller.agarrado = True
+                #     break
 
 
 
@@ -488,9 +488,6 @@ if __name__ == "__main__":
             if aux.click2:
                 aux.childs = [NodoTextura]
                 gpusNumbers[index].shader = 4
-            if not aux.click2:
-                aux.childs = [CirculoBlanco]
-                gpusNumbers [index].shader = 2
 
 
 
