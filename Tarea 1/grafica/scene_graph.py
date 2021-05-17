@@ -127,7 +127,7 @@ def drawSceneGraphNodeTEXT(node, pipeline, Color, transformName, parentTransform
 
 #Orden pipeline 1 = Simple, pipeline 2 = Texto pipeline 3 = Texto color 2
 #Completar con texture con pipeline 3 en leaf.shader == 3.
-def drawSceneGraphNodeDefinitivo(node, pipeline1, pipeline2, Color,Color2, transformName, parentTransform = tr.identity()):
+def drawSceneGraphNodeDefinitivo(node, pipeline1, pipeline2, pipeline3, Color,Color2, transformName, parentTransform = tr.identity()):
     newTransform = np.matmul(parentTransform, node.transform)
 
     if len(node.childs) == 1 and isinstance(node.childs[0], gs.GPUShape):
@@ -150,6 +150,10 @@ def drawSceneGraphNodeDefinitivo(node, pipeline1, pipeline2, Color,Color2, trans
             glUniform4f(glGetUniformLocation(pipeline2.shaderProgram, "backColor"), Color2[0],Color2[1],Color2[2],1)
             glUniformMatrix4fv(glGetUniformLocation(pipeline2.shaderProgram, transformName), 1, GL_TRUE, newTransform)
             pipeline2.drawCall(leaf)
+        elif leaf.shader == 4:
+            glUseProgram(pipeline3.shaderProgram)
+            glUniformMatrix4fv(glGetUniformLocation(pipeline3.shaderProgram, transformName), 1, GL_TRUE, newTransform)
+            pipeline3.drawCall(leaf)
     else:
         for child in node.childs:
-            drawSceneGraphNodeDefinitivo(child, pipeline1, pipeline2, Color,Color2, transformName, newTransform)
+            drawSceneGraphNodeDefinitivo(child, pipeline1, pipeline2,pipeline3, Color,Color2, transformName, newTransform)

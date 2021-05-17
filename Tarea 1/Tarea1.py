@@ -18,7 +18,6 @@ import time
 
 ########################################################################
 # Obtener lista con los valores puestos en el csv
-#usar una textura transparente para reconocer cada uno de los nodos
 
 with open('input.csv','r') as file:
     file = csv.reader(file)
@@ -104,14 +103,14 @@ def mouse_button_callback(window, button, action, mods):
 
 
         if (button == glfw.MOUSE_BUTTON_2):
-            pass
+            controller.rightClickOn = True
 
     elif (action ==glfw.RELEASE):
         if (button == glfw.MOUSE_BUTTON_1):
             controller.leftClickOn = False
 
         if (button == glfw.MOUSE_BUTTON_2):
-            controller.rightClickOn = not controller.rightClickOn
+            controller.rightClickOn = False
 
 
 
@@ -139,7 +138,7 @@ if __name__ == "__main__":
     glfw.make_context_current(window)
     ###################################################################
     #pipelines
-    texturePipeline = es.SimpleTextureShaderProgram()
+    texturePipeline = es.SimpleTextureTransformShaderProgram()
     textPipeline = tx.TextureTextRendererShaderProgram()
     pipeline = es.SimpleTransformShaderProgram()
 
@@ -170,9 +169,11 @@ if __name__ == "__main__":
     ####################################################################
     ####################################################################
     ####################################################################
+    ##########
     # Colores
     Color = [0.6,0.2,0.8]
     Color2 = [0.0,1.0,0.0]
+    ##########
 
     # Creacion de lista con los numeros convertidos a gpuShape   
     def createNumbers(Numeros):
@@ -190,8 +191,10 @@ if __name__ == "__main__":
             gpusNumbers.append(gpuHeader)
         return gpusNumbers
 
+    ##########
     # Instanciacion
     gpusNumbers = createNumbers(Numeros)
+    ##########
 
     # Creacion de nodo definitivo
     def NodoDefinitivo():
@@ -234,10 +237,10 @@ if __name__ == "__main__":
 
  
 
-    ########################################
+    ##########
     #Instanciacion
     NodoDef = NodoDefinitivo()
-    ########################################
+    ##########
     
 
 
@@ -268,12 +271,12 @@ if __name__ == "__main__":
         CircleNode.transform = tr.uniformScale(largo)
 
 
-
+    ##########
     #Primero se define el radio
     aux = sg.findNode(NodoDef, "Circulo tr radio")
     Radio = (aux.transform[0][0])/2
     Radiocuad = Radio**2
-    
+    ##########
 
     ##########################################################
     #Creacion Circulo seleccionado
@@ -289,33 +292,26 @@ if __name__ == "__main__":
         Circ.childs += [gpuCircSelect]
 
         return Circ
-
+    ##########
     CirculoBlanco = createNodoCircleRGB(30, Color)
     CirculoVerde = createNodoCircleRGB(30, Color2)
+    ##########
 
-
-    def createColorQuad(Xo,Yo,X1,Y1,Color):
-
-        # Defining locations and colors for each vertex of the shape    
-        vertices = [
-        #   positions        colors
-            Xo, Yo, 0.0,  Color[0], Color[1], Color[2],
-            X1, Yo, 0.0,  Color[0], Color[1], Color[2],
-            X1, Y1, 0.0, Color[0], Color[1], Color[2],
-            Xo ,Y1, 0.0, Color[0], Color[1], Color[2]]
-
-        # Defining connections among vertices
-        # We have a triangle every 3 indices specified
-        indices = [
-            0,1,2,
-            2,3,0]
-
-        return Shape(vertices, indices)
-
-
-
+    def createNodoTexture():
+        cuadText = bs.createTextureQuad(2, 2)
+        gpuNodoText = GPUShape().initBuffers()
+        texturePipeline.setupVAO(gpuNodoText)
+        gpuNodoText.fillBuffers(cuadText.vertices, cuadText.indices, GL_DYNAMIC_DRAW)
+        gpuNodoText.shader = 4
+        gpuNodoText.texture = es.textureSimpleSetup(
+            getAssetPath("NodoText.png"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+        
+        NodoTextura = sg.SceneGraphNode("Nodo Textura")
+        NodoTextura.transform = tr.uniformScale(0.5)
+        NodoTextura.childs += [gpuNodoText]
+        return NodoTextura
     
-
+    NodoTextura = createNodoTexture()
         
 
     # Encontrar posiciones de nodos.
@@ -351,19 +347,6 @@ if __name__ == "__main__":
         mousePosX = 2 * (controller.mousePos[0] - width/2) / width
         mousePosY = 2 * (height/2 - controller.mousePos[1]) / height
 
-        theta = glfw.get_time()
-        inicial = time.time()
-        final = time.time()
-
-
-        
-
-
-
-        #################################################################################
-        #Configurar agarre de nodos
-        #Con el radio definido
-        #Se cumple ecuacion de circulo (x-x0).... xo es la pos del nodo   aux.transform = tr.translate(mousePosX, mousePosY, 0)
 
         ########################################
         ########################################
@@ -378,32 +361,44 @@ if __name__ == "__main__":
                 Xo = aux.transform[0][3]
                 Yo = aux.transform[1][3]
 
-                # if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and not i == Indice and controller.marcado:
-                #     aux.click = True
-                #     break
-                # elif (mousePosX-Xo)**2 + (mousePosY-Yo)**2 > Radiocuad and not i == Indice and controller.marcado:
-                #     aux.click = False
-                #     break
+                # Esto es para formar el arbol
+                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.rightClickOn and i != Indice and controller.marcado:
 
-                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn and i == Indice and controller.marcado:
+
+                    #Se encuentra el nodoActual
+                    NodoActual = sg.findNode(NodoDef,"Nodo" + str(i))
+                    ValorActual = NodoActual.valores
+                    print(ValorActual)
+
+                    #Se encuentra el nodoAnterior
+                    NodoAnterior = sg.findNode(NodoDef,"Nodo" + str(Indice))
+                    ValorAnterior = NodoAnterior.valores
+                    print(ValorAnterior)
+                    time.sleep(0.2)
+
+                # Esto es para despintar el pintado
+                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.rightClickOn and i == Indice and controller.marcado:
                     aux.click = False
                     controller.marcado = False
                     Indice = -1
-                    time.sleep(0.5)
+                    time.sleep(0.2)
                     break
 
                 #Esto es para pintar
-                elif (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn and not controller.marcado:
+                elif (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.rightClickOn and not controller.marcado:
                     aux.click = True
                     controller.marcado = True
                     Indice = i
-                    time.sleep(0.5)
+                    time.sleep(0.2)
                     break
 
                 #Esto es para mover
                 if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn:
                     controller.agarrado = True
                     break
+
+
+
 
 
         # Esto es dps del break de mover
@@ -424,51 +419,20 @@ if __name__ == "__main__":
             aux.childs = [CirculoBlanco]
             gpusNumbers [index].shader = 2
 
-         
-
-
-
-
-
-
-        # if not controller.marcado:
-        #     for i in range(len(Numeros)):
-        #         index = i
-        #         aux = sg.findNode(NodoDef, "CNodo" + str(i) +"trasladado")
-        #         aux2 = sg.findNode(NodoDef, "Nodo" + str(i) +"trasladado")
-        #         Xo = aux.transform[0][3]
-        #         Yo = aux.transform[1][3]
-        #         if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.rightClickOn:
-        #             aux.click = not aux.click
-        #             
-        #             break               
-        #             # if not (PosicionesNodos[i] in NodosUsados):
-        #             #     NodosUsados.append(PosicionesNodos[i])
-        #             #     IndicesUsados.append(i)
-        #             #     print (NodosUsados)
-        #             #     print (IndicesUsados)
-        #             # elif (PosicionesNodos[i] in NodosUsados):
-        #             #     NodosUsados.remove(PosicionesNodos[i])
-        #             #     IndicesUsados.remove(i)
-        #             #     print(NodosUsados)
-        #             #     print(IndicesUsados)
-        #             # if len(NodosUsados) == 2:
-        #             #     if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn:
-        #             #         pass
-
+ 
 
         ########################################
         ########################################
         ########################################
-
-
 
         
         
         ########################################
         ########################################
         ########################################
-        sg.drawSceneGraphNodeDefinitivo(NodoDef, pipeline, textPipeline, Color,Color2,"transform")
+        sg.drawSceneGraphNodeDefinitivo(NodoTextura, pipeline, textPipeline, texturePipeline, Color, Color2, "transform")
+        sg.drawSceneGraphNodeDefinitivo(NodoDef, pipeline, textPipeline,texturePipeline, Color,Color2,"transform")
+        
         
         glfw.swap_buffers(window)
 
