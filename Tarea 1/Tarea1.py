@@ -52,6 +52,7 @@ class Controller:
         self.marcado = False
         self.elegir = False
         self.error = False
+        self.arreglar = False
     
 
 controller = Controller()
@@ -446,17 +447,11 @@ if __name__ == "__main__":
                     if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and mousePosX < Xo and controller.rightClickOn and i == Indice2:
                         if NODO1Valores < NODO2Valores:
                             print("bien hecho")
-                            controller.marcado = False
-                            controller.elegir = False
-                            sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").click = False
-                            sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").click2 = False
+                            controller.arreglar = True
                             time.sleep(0.2)
                             break
                         if NODO1Valores > NODO2Valores:
-                            controller.marcado = False
-                            controller.elegir = False
-                            sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").click = False
-                            sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").click2 = False
+                            controller.arreglar = True
                             controller.error = True
                             sg.findNode(NodoError, "Nodo Error Trasladado").transform = tr.translate(0.0, 2.0, 0)
                             time.sleep(0.2)
@@ -466,20 +461,14 @@ if __name__ == "__main__":
                     # Se afirma que el nodo2 es menor al nodo1
                     if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and mousePosX > Xo and controller.rightClickOn and i == Indice2:
                         if NODO1Valores < NODO2Valores:
-                            controller.marcado = False
-                            controller.elegir = False
-                            sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").click = False
-                            sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").click2 = False
+                            controller.arreglar = True
                             controller.error = True
                             sg.findNode(NodoError, "Nodo Error Trasladado").transform = tr.translate(0.0, 2.0, 0)
                             time.sleep(0.2)
                             break
                         if NODO1Valores > NODO2Valores:
                             print("bien hecho")
-                            controller.marcado = False
-                            controller.elegir = False
-                            sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").click = False
-                            sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").click2 = False
+                            controller.arreglar = True
                             time.sleep(0.2)
                             break
 
@@ -542,6 +531,22 @@ if __name__ == "__main__":
             if aux.click2:
                 aux.childs = [NodoTextura]
                 gpusNumbers[index].shader = 4
+        
+        if controller.arreglar:
+            controller.arreglar = False
+            controller.marcado = False
+            controller.elegir = False
+            sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").click = False
+            sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").click2 = False
+            sg.findNode(NodoDef,"CNodo" + str(Indice) +"trasladado").childs = [CirculoBlanco]
+            gpusNumbers [Indice].shader = 2
+            sg.findNode(NodoDef,"CNodo" + str(Indice2) +"trasladado").childs = [CirculoBlanco]
+            gpusNumbers [Indice2].shader = 2
+            Indice = -1
+            Indice2 = -1
+
+
+
 
         ########################################
         ########################################
