@@ -504,7 +504,7 @@ if __name__ == "__main__":
                     break
 
                 #Esto es para pintar
-                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.rightClickOn and not controller.marcado and not controller.elegir: #and not (aux.lineaIzquierda or aux.lineaDerecha) and not aux.noUsar:
+                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.rightClickOn and not controller.marcado and not controller.elegir and not (aux.lineaIzquierda and aux.lineaDerecha and (aux.PadreIzquierdo or aux.PadreDerecho)):
                     aux.click = True
                     controller.marcado = True
                     Indice = i
@@ -570,7 +570,7 @@ if __name__ == "__main__":
             y2 = b.transform[1][3]
             c = sg.findNode(NodoDef, "Nodos")
             b.lineaIzquierda = True
-            a.noUsar = True
+            a.PadreDerecho = True
             gpuLineaNodo = createGpuLineaNodo(x,y,x2,y2,Color[0],Color[1],Color[2])
             c.childs += [gpuLineaNodo]
 
@@ -584,7 +584,7 @@ if __name__ == "__main__":
             y2 = b.transform[1][3]
             c = sg.findNode(NodoDef, "Nodos")
             b.lineaDerecha = True
-            a.noUsar = True
+            a.PadreDerecho = True
             gpuLineaNodo = createGpuLineaNodo(x,y,x2,y2,Color[0],Color[1],Color[2])
             c.childs += [gpuLineaNodo]
         
