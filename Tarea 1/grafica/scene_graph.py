@@ -26,8 +26,9 @@ class SceneGraphNode:
         self.click = False
         self.click2 = False
         self.valor = 0
-        self.linea = False
-        self.linea2 = False
+        self.lineaIzquierda = False
+        self.lineaDerecha = False
+        self.noUsar = False
 
     def clear(self):
         """Freeing GPU memory"""

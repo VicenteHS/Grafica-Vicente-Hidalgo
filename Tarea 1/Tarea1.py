@@ -390,33 +390,6 @@ if __name__ == "__main__":
 
 
 
-    
-#------------------------------------------------------------------------------------#
-    # def createNodoArbol(Nodo1, Nodo2):
-    #     NodoInfArbol = sg.SceneGraphNode("Nodo Inf Arbol")
-    #     NodoInfArbol.transform = tr.identity()
-    #     NodoInfArbol.childs += [Nodo1]
-
-    #     NodoInfArbolTrasladado = sg.SceneGraphNode("Nodo Inf Arbol Trasladado")
-    #     NodoInfArbolTrasladado.transform = tr.translate(-0.3, -0.3, 0)
-    #     NodoInfArbolTrasladado.childs += [NodoInfArbol]
-
-    #     NodoSupArbol = sg.SceneGraphNode("Nodo Sup Arbol")
-    #     NodoSupArbol.transform = tr.identity()
-    #     NodoSupArbol.childs += [Nodo2]
-
-    #     NodoSupTrasladado = sg.SceneGraphNode("Nodo Sup Arbol Trasladado")
-    #     NodoSupTrasladado.transform = tr.identity()
-    #     NodoSupTrasladado.childs += [NodoSupTrasladado]
-
-    #     NodoArbol = sg.SceneGraphNode("Nodo Arbol")
-    #     NodoArbol.transform = tr.identity()
-    #     NodoArbol.childs += [NodoInfArbolTrasladado,NodoSupTrasladado]
-
-    #     return NodoArbol
-
-
-
     def mediana(L):
         L.sort()
         mitad = int(len(L)/2)
@@ -427,7 +400,7 @@ if __name__ == "__main__":
     # Encontrar posiciones de nodos.
     PosicionesNodos = []
     IndicesUsados = []
-    NodosUsados = []
+    iUsados = []
     Indice = -1
     contadorespecial = -1
 
@@ -464,20 +437,19 @@ if __name__ == "__main__":
                     NODO1Valores = NODO1.valores
                     NODO2 = sg.findNode(NodoDef,"Nodo" + str(Indice2))
                     NODO2Valores = NODO2.valores
-
-                    a = sg.findNode(NodoDef, "CNodo" + str(Indice) +"trasladado")
-                    x = a.transform[0][3] + largo/2
-                    y = a.transform[1][3]
                     b = sg.findNode(NodoDef, "CNodo" + str(Indice2) +"trasladado")
-                    x2 = b.transform[0][3] -largo/2
-                    y2 = b.transform[1][3]
-                    c = sg.findNode(NodoDef, "Nodos")
 
                     # Se afirma que el nodo1 es menor al nodo2
                     if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and mousePosX < Xo and controller.rightClickOn and i == Indice2:
                         if NODO1Valores < NODO2Valores:
-                            print("bien hecho")
-                            controller.linea = True
+                            #Ver si la linea ya esta dibujada
+                            if not [Indice,Indice2] in IndicesUsados and not b.lineaIzquierda:
+                                controller.linea = True
+                                IndicesUsados.append([Indice,Indice2])
+                                IndicesUsados.append([Indice2,Indice])
+                                iUsados.append(Indice)
+                                iUsados.append(Indice2)
+
                             controller.arreglar = True
                             time.sleep(0.2)
                             break
@@ -500,8 +472,14 @@ if __name__ == "__main__":
                             time.sleep(0.2)
                             break
                         if NODO1Valores > NODO2Valores:
-                            print("bien hecho")
-                            controller.linea2 = True
+                            #Ver si la linea ya esta dibujada
+                            if not [Indice,Indice2] in IndicesUsados and not b.lineaDerecha:
+                                controller.linea2 = True
+                                IndicesUsados.append([Indice,Indice2])
+                                IndicesUsados.append([Indice2,Indice])
+                                iUsados.append(Indice)
+                                iUsados.append(Indice2)
+
                             controller.arreglar = True
                             time.sleep(0.2)
                             break
@@ -526,7 +504,7 @@ if __name__ == "__main__":
                     break
 
                 #Esto es para pintar
-                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.rightClickOn and not controller.marcado and not controller.elegir:
+                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.rightClickOn and not controller.marcado and not controller.elegir: #and not (aux.lineaIzquierda or aux.lineaDerecha) and not aux.noUsar:
                     aux.click = True
                     controller.marcado = True
                     Indice = i
@@ -534,7 +512,7 @@ if __name__ == "__main__":
                     break
 
                 #Esto es para mover
-                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn:
+                if (mousePosX-Xo)**2 + (mousePosY-Yo)**2 <= Radiocuad and controller.leftClickOn and not i in iUsados:
                     controller.agarrado = True
                     break
 
@@ -582,15 +560,31 @@ if __name__ == "__main__":
                 aux.childs = [NodoTextura]
                 gpusNumbers[index].shader = 4
         
-        # Dibujar linea
+        # Dibujar linea izq
         if controller.linea:
+            a = sg.findNode(NodoDef, "CNodo" + str(Indice) +"trasladado")
+            x = a.transform[0][3] + largo/2
+            y = a.transform[1][3]
+            b = sg.findNode(NodoDef, "CNodo" + str(Indice2) +"trasladado")
+            x2 = b.transform[0][3] -largo/2
+            y2 = b.transform[1][3]
+            c = sg.findNode(NodoDef, "Nodos")
+            b.lineaIzquierda = True
+            a.noUsar = True
             gpuLineaNodo = createGpuLineaNodo(x,y,x2,y2,Color[0],Color[1],Color[2])
             c.childs += [gpuLineaNodo]
 
-
+        # Dibujar linea Der
         if controller.linea2:
+            a = sg.findNode(NodoDef, "CNodo" + str(Indice) +"trasladado")
             x = a.transform[0][3] - largo/2
+            y = a.transform[1][3]
+            b = sg.findNode(NodoDef, "CNodo" + str(Indice2) +"trasladado")
             x2 = b.transform[0][3] +largo/2
+            y2 = b.transform[1][3]
+            c = sg.findNode(NodoDef, "Nodos")
+            b.lineaDerecha = True
+            a.noUsar = True
             gpuLineaNodo = createGpuLineaNodo(x,y,x2,y2,Color[0],Color[1],Color[2])
             c.childs += [gpuLineaNodo]
         
