@@ -18,7 +18,6 @@ import time
 
 ########################################################################
 # Obtener lista con los valores puestos en el csv
-# REVISAR PROBLEMAS CON EL 99!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 
 with open(sys.argv[1],'r') as file:
     file = csv.reader(file)
@@ -33,7 +32,7 @@ Valores = []
 for i in range (len (Numeros)):
     Valores.append(int(Numeros[i]))
 
-INPUT = sys.argv[2]
+
 
 
 SIZE_IN_BYTES = 4
@@ -59,6 +58,7 @@ class Controller:
         self.linea = False
         self.linea2 = False
         self.busqueda = False
+        # self.input = sys.argv[2]
     
 
 controller = Controller()
@@ -400,6 +400,7 @@ if __name__ == "__main__":
     iUsados = []
     Indice = -1
     contadorespecial = -1
+    contadorespecial2 = -1
 
     while not glfw.window_should_close(window):
         glfw.poll_events()
@@ -422,12 +423,7 @@ if __name__ == "__main__":
                 Xo = aux.transform[0][3]
                 Yo = aux.transform[1][3]
 
-                # if controller.busqueda:
-                #     busqueda = sg.findNode(NodoDef,"Nodo" + str(i))
-                #     busquedaValor = busqueda.valores
-                #     if busquedaValor == INPUT:
-                #         aux.click
-                #         break
+                
                 
                 # Se presenta el error 
                 if controller.error:
@@ -534,6 +530,27 @@ if __name__ == "__main__":
                         aux.childs = [CirculoMorado]
                         gpusNumbers [index].shader = 2
                         contadorespecial = -1
+
+
+                # # Tras apretar enter
+                # if controller.busqueda:
+                #     if sg.findNode(NodoDef,"Nodo" + str(i)).valores == controller.input:
+                #         aux.childs = [CirculoShearing]
+                #         gpusNumbers[index].shader = 4
+                #         contadorespecial2 = 25
+                    # else:
+                    #     controller.busqueda = False
+                    #     controller.error = True
+                    #     sg.findNode(NodoError, "Nodo Error Trasladado").transform = tr.translate(0.0, 2.0, 0)
+                    #     time.sleep(0.2)
+                    #     break
+                # if not controller.busqueda and contadorespecial2 == 25:
+                #     if sg.findNode(NodoDef,"Nodo" + str(i)).valores == MedianaValores:
+                #         aux.childs = [CirculoMorado]
+                #         gpusNumbers [index].shader = 2
+                #         contadorespecial2 = -1
+                
+
                 
 
 
@@ -555,7 +572,7 @@ if __name__ == "__main__":
             aux.childs = [CirculoVerde]
             gpusNumbers[index].shader = 3
             aux.childs[0].transform = tr.uniformScale(0.25)
-        if not aux.click:
+        if not aux.click and not controller.busqueda:
             aux.childs = [CirculoMorado]
             gpusNumbers [index].shader = 2
 
@@ -610,8 +627,6 @@ if __name__ == "__main__":
             Indice = -1
             Indice2 = -1
         
-
-
 
 
 
