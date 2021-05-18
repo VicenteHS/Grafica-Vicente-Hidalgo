@@ -20,7 +20,7 @@ import time
 # Obtener lista con los valores puestos en el csv
 # REVISAR PROBLEMAS CON EL 99!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 
-with open('input.csv','r') as file:
+with open(sys.argv[1],'r') as file:
     file = csv.reader(file)
 
     for line in file:
@@ -32,6 +32,8 @@ for i in range (len (Num)):
 Valores = []
 for i in range (len (Numeros)):
     Valores.append(int(Numeros[i]))
+
+INPUT = sys.argv[2]
 
 
 SIZE_IN_BYTES = 4
@@ -56,15 +58,7 @@ class Controller:
         self.hint = False
         self.linea = False
         self.linea2 = False
-
-class Arbol:
-    def __init__(self,contador):
-        self.Raiz = None
-        self.Der = None
-        self.izq = None
-        self.LineaDer = None
-        self.LineaIzq = None
-        self.contador = contador
+        self.busqueda = False
     
 
 controller = Controller()
@@ -82,6 +76,9 @@ def on_key(window, key, scancode, action, mods):
     
     elif key == glfw.KEY_H:
         controller.hint = not controller.hint
+    
+    elif key == glfw.KEY_ENTER:
+        controller.busqueda = True
 
     else:
         print('Unknown key')
@@ -414,6 +411,7 @@ if __name__ == "__main__":
         ########################################
         ########################################
         ########################################
+            
 
 
         if not controller.agarrado:
@@ -423,6 +421,13 @@ if __name__ == "__main__":
                 aux2 = sg.findNode(NodoDef, "Nodo" + str(i) +"trasladado")
                 Xo = aux.transform[0][3]
                 Yo = aux.transform[1][3]
+
+                # if controller.busqueda:
+                #     busqueda = sg.findNode(NodoDef,"Nodo" + str(i))
+                #     busquedaValor = busqueda.valores
+                #     if busquedaValor == INPUT:
+                #         aux.click
+                #         break
                 
                 # Se presenta el error 
                 if controller.error:
