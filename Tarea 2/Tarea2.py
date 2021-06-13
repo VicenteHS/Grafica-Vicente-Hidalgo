@@ -15,6 +15,7 @@ import grafica.easy_shaders as es
 import grafica.lighting_shaders as ls
 from grafica.assets_path import getAssetPath
 import grafica.scene_graph as sg
+import grafica.ex_curves as cv
 
 __author__ = "Daniel Calderon"
 __license__ = "MIT"
@@ -60,6 +61,11 @@ def on_key(window, key, scancode, action, mods):
 
     elif key == glfw.KEY_ESCAPE:
         glfw.set_window_should_close(window, True)
+
+
+################################################################
+################################################################
+#Creating a boat for the tobogan.
 
 def createBoat():
     # Defining locations and texture coordinates for each vertex of the shape  
@@ -236,11 +242,47 @@ def CompleteBoat():
     DefBoat.childs = [base, mastil, TranslatedFlag]
 
     return DefBoat
-    
 
 
 
 
+
+################################################################
+################################################################
+#Curves before tobogan
+
+
+
+def createCurve(r,g,b):
+    vertices = []
+    indices = []
+    M = cv.CatmullRomMatrix(
+        np.array([[0, 0, 1]]).T,
+        np.array([[0, 1, 0]]).T,
+        np.array([[1, 0, 1]]).T,
+        np.array([[1, 1, 0]]).T
+    )
+    curve = cv.evalCurve(M,20)
+    delta = 1 / len(curve)
+    x_0 = -0.5 # Posicion x inicial de la recta inferior
+    y_0 = -0.2 # Posicion y inicial de la recta inferior
+    counter = 0 # Contador de vertices, para indicar los indices
+
+    # Se generan los vertices
+    for i in range(len(curve)-1):
+        c_0 = curve[i] # punto i de la curva
+        r_0 = [x_0 + i*delta, y_0] # punto i de la recta
+        c_1 = curve[i + 1] # punto i + 1 de la curva
+        r_1 = [x_0 + (i+1)*delta, y_0] # punto i + 1 de la recta
+        vertices += [c_0[0], c_0[1], 0, r + 0.3, g + 0.3, b + 0.3]
+        vertices += [r_0[0], r_0[1], 0, r, g, b]
+        vertices += [c_1[0], c_1[1], 0, r + 0.3, g + 0.3, b + 0.3]
+        vertices += [r_1[0], r_1[1], 0, r, g, b]
+        indices += [counter + 0, counter +1, counter + 2]
+        indices += [counter + 2, counter + 3, counter + 1]
+        counter += 4
+
+    return bs.Shape(vertices, indices)
 
 if __name__ == "__main__":
 
@@ -286,6 +328,7 @@ if __name__ == "__main__":
 
     # Creating shapes on GPU memory
     gpuAxis = createGPUShape(colorPipeline, bs.createAxis(4))
+    gpuCurve = createGPUShape(colorPipeline, createCurve(1,0.5,0.7))
 
     # Creating Scenegraph of a CompleteBoat
     CompleteBoat = CompleteBoat()
@@ -337,7 +380,7 @@ if __name__ == "__main__":
             glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
             glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
             glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
-            colorPipeline.drawCall(gpuAxis, GL_LINES)
+            colorPipeline.drawCall(gpuCurve, GL_LINES)
         
         # Selecting the lighting shader program
         if controller.lightingModel == LIGHT_FLAT:

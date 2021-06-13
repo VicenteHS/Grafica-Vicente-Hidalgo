@@ -15,8 +15,6 @@ from grafica.assets_path import getAssetPath
 
 from grafica.gpu_shape import GPUShape, SIZE_IN_BYTES
 
-__author__ = "Sebastián Olmos"
-__license__ = "MIT"
 
 # We extend the functionality of a GPUShape with an additional texture.
 class TexGPUShape(GPUShape):
