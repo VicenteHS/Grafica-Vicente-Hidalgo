@@ -42,12 +42,13 @@ def bezierMatrix(P0, P1, P2, P3):
 #################################################
 #################################################
 
-Lista = [np.array([[3, 5, 0]]).T, #P0
-    np.array([[4, 2, 0]]).T,      #P1
-    np.array([[5, 6, 0]]).T,      #P2
-    np.array([[6, 7, 0]]).T,      #P3
-    np.array([[8, 5, 0]]).T,      #P4
-    np.array([[10, 10, 0]]).T]    #P5
+Lista = [np.array([[-1, -1, 50]]).T,  #P0
+    np.array([[0, 0, 50]]).T,         #P1
+    np.array([[5, 6, 45]]).T,         #P2
+    np.array([[0, 12, 40]]).T,        #P3
+    np.array([[-5, 6, 35]]).T,        #P4
+    np.array([[-10, -2, 30]]).T,      #P5
+    np.array([[-5, 0, 25]]).T]        #P6
 
 def CatmullRomMatrixL(L):
     Matrices = []
@@ -133,31 +134,21 @@ def evalCurve(M, N):
 if __name__ == "__main__":
     
     hermiteCurve = evalCurve(CatmullRomMatrixL(Lista)[0], 20)
+    hermiteCurve2 = evalCurve(CatmullRomMatrixL(Lista)[1], 20)
+    hermiteCurve3 = evalCurve(CatmullRomMatrixL(Lista)[2], 20)
+    hermiteCurve4 = evalCurve(CatmullRomMatrixL(Lista)[3], 20)
     
     # Setting up the matplotlib display for 3D
     fig = mpl.figure()
     ax = fig.gca(projection='3d')
         
     plotCurve(ax, hermiteCurve, "Hermite curve", (1,0,0))
+    plotCurve(ax, hermiteCurve2, "Hermite curve", (0,1,0))
+    plotCurve(ax, hermiteCurve3, "Hermite curve", (1,0,1))
+    plotCurve(ax, hermiteCurve4, "Hermite curve", (1,1,0))
     
-    """
-    Example for CR curve Continues
-    """
-    
-    P5 = np.array([[8, 5, 0]]).T
-    R0 = np.array([[0, 0, 1]]).T
-    R1 = np.array([[0, 1, 0]]).T
-    R2 = np.array([[1, 0, 1]]).T
-    R3 = np.array([[1, 1, 0]]).T
-    
-    bezierCurve = evalCurve(CatmullRomMatrixL(Lista)[1], 20)
-        
-    plotCurve(ax, bezierCurve, "Bezier curve")
     
     # Adding a visualization of the control points
-    controlPoints = np.concatenate((R0, R1, R2, R3), axis=1)
-    ax.scatter(controlPoints[0,:], controlPoints[1,:], controlPoints[2,:], color=(1,0,0))
-    
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_zlabel('z')
