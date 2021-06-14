@@ -117,14 +117,14 @@ def on_key(window, key, scancode, action, mods):
 #Curves before tobogan
 
 def createLine(N):
-    Lista = [np.array([[0, 0, 10]]).T,    #P0
-        np.array([[3, 3, 9]]).T,         #P1
+    Lista = [np.array([[0, 0, 10]]).T,     #P0
+        np.array([[3, 3, 9]]).T,           #P1
         np.array([[-3, 3, 8]]).T,          #P2
         np.array([[-3, -3, 7]]).T,         #P3
-        np.array([[3, -3, 5]]).T,         #P4
-        np.array([[5, 5, 3]]).T,       #P5
-        np.array([[2, 2, 2]]).T,         #P6
-        np.array([[3, 3, 0]]).T]          #P7
+        np.array([[3, -3, 5]]).T,          #P4
+        np.array([[5, 5, 3]]).T,           #P5
+        np.array([[2, 2, 2]]).T,           #P6
+        np.array([[3, 3, 0]]).T]           #P7
 
 
     CRcurve = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[0], N).tolist()
