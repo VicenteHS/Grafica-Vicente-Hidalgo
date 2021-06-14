@@ -117,25 +117,26 @@ def on_key(window, key, scancode, action, mods):
 #Curves before tobogan
 
 def createLine(N):
-    Lista = [np.array([[-1, -1, 10]]).T,  #P0
-        np.array([[0, 0, 10]]).T,         #P1
-        np.array([[5, 6, 9]]).T,         #P2
-        np.array([[0, 12, 8]]).T,        #P3
-        np.array([[-5, 6, 7]]).T,        #P4
-        np.array([[-10, -2, 6]]).T,      #P5
-        np.array([[-5, 0, 5]]).T]        #P6
+    Lista = [np.array([[0, 0, 10]]).T,    #P0
+        np.array([[3, 3, 9]]).T,         #P1
+        np.array([[-3, 3, 8]]).T,          #P2
+        np.array([[-3, -3, 7]]).T,         #P3
+        np.array([[3, -3, 5]]).T,         #P4
+        np.array([[5, 5, 3]]).T,       #P5
+        np.array([[2, 2, 2]]).T,         #P6
+        np.array([[3, 3, 0]]).T]          #P7
 
 
     CRcurve = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[0], N).tolist()
     CRcurve2 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[1], N).tolist()
     CRcurve3 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[2], N).tolist()
     CRcurve4 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[3], N).tolist()
+    CRcurve5 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[4], N).tolist()
 
     vertices = []
     indices = []
-    for i in range(4*N-3):
+    for i in range(5*N-4):
         indices.append(i)
-    print(indices)
 
     for i in range(len(CRcurve)):
         for j in range(len(CRcurve[0])):
@@ -149,10 +150,13 @@ def createLine(N):
     for i in range(len(CRcurve)):
         for j in range(len(CRcurve[0])):
             vertices.append(CRcurve4[i][j])
+    for i in range(len(CRcurve)):
+        for j in range(len(CRcurve[0])):
+            vertices.append(CRcurve5[i][j])
 
     return bs.Shape(vertices, indices)
 
-curve = createLine(50)
+curve = createLine(10)
 
     
 
