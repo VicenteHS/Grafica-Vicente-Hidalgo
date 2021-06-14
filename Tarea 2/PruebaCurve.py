@@ -23,6 +23,66 @@ class Controller:
         self.fillPolygon = True
         self.showAxis = True
 
+#SHADER MODIFICADO PARA CREAR LINEAS
+class CurveShader:
+
+    def __init__(self):
+
+        vertex_shader = """
+            #version 130
+
+            in vec3 position;
+
+            out vec3 newColor;
+            void main()
+            {
+                gl_Position = vec4(position, 1.0f);
+                newColor = vec3(1,0,0);
+            }
+            """
+
+        fragment_shader = """
+            #version 130
+            in vec3 newColor;
+
+            out vec4 outColor;
+            void main()
+            {
+                outColor = vec4(newColor, 1.0f);
+            }
+            """
+
+        self.shaderProgram = OpenGL.GL.shaders.compileProgram(
+            OpenGL.GL.shaders.compileShader(vertex_shader, GL_VERTEX_SHADER),
+            OpenGL.GL.shaders.compileShader(fragment_shader, GL_FRAGMENT_SHADER))
+
+
+    def setupVAO(self, gpuShape):
+
+        glBindVertexArray(gpuShape.vao)
+
+        glBindBuffer(GL_ARRAY_BUFFER, gpuShape.vbo)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpuShape.ebo)
+
+        # 3d vertices + rgb color specification => 3*4  = 12 bytes
+        position = glGetAttribLocation(self.shaderProgram, "position")
+        glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 12, ctypes.c_void_p(0))
+        glEnableVertexAttribArray(position)
+
+        # Unbinding current vao
+        glBindVertexArray(0)
+
+
+    def drawCall(self, gpuShape, mode=GL_TRIANGLES):
+        assert isinstance(gpuShape, GPUShape)
+
+        # Binding the VAO and executing the draw call
+        glBindVertexArray(gpuShape.vao)
+        glDrawElements(mode, gpuShape.size, GL_UNSIGNED_INT, None)
+
+        # Unbind the current VAO
+        glBindVertexArray(0)
+
 
 # We will use the global controller as communication with the callback function
 controller = Controller()
@@ -56,38 +116,45 @@ def on_key(window, key, scancode, action, mods):
 ################################################################
 #Curves before tobogan
 
+def createLine():
+    Lista = [np.array([[-1, -1, 0]]).T,  #P0
+        np.array([[0, 0, 0]]).T,         #P1
+        np.array([[5, 6, 0]]).T,         #P2
+        np.array([[0, 12, 0]]).T,        #P3
+        np.array([[-5, 6, 0]]).T,        #P4
+        np.array([[-10, -2, 0]]).T,      #P5
+        np.array([[-5, 0, 0]]).T]        #P6
 
 
-def createCurve(r,g,b):
+    CRcurve = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[0], 20).tolist()
+    print(type(CRcurve))
+    CRcurve2 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[1], 20).tolist()
+    CRcurve3 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[2], 20).tolist()
+    CRcurve4 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[3], 20).tolist()
+
     vertices = []
-    indices = []
-    M = cv.CatmullRomMatrix(
-        np.array([[0, 0, 0]]).T,
-        np.array([[0, 1, 0]]).T,
-        np.array([[1, 0, 0]]).T,
-        np.array([[1, 1, 0]]).T
-    )
-    curve = cv.evalCurve(M,20)
-    delta = 1 / len(curve)
-    x_0 = 0.0 # Posicion x inicial de la recta inferior
-    y_0 = 0.0 # Posicion y inicial de la recta inferior
-    counter = 0 # Contador de vertices, para indicar los indices
+    indices = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
 
-    # Se generan los vertices
-    for i in range(len(curve)-1):
-        c_0 = curve[i] # punto i de la curva
-        r_0 = [x_0 + i*delta, y_0] # punto i de la recta
-        c_1 = curve[i + 1] # punto i + 1 de la curva
-        r_1 = [x_0 + (i+1)*delta, y_0] # punto i + 1 de la recta
-        vertices += [c_0[0], c_0[1], 0, r + 0.3, g + 0.3, b + 0.3]
-        vertices += [r_0[0], r_0[1], 0, r, g, b]
-        vertices += [c_1[0], c_1[1], 0, r + 0.3, g + 0.3, b + 0.3]
-        vertices += [r_1[0], r_1[1], 0, r, g, b]
-        indices += [counter + 0, counter +1, counter + 2]
-        indices += [counter + 2, counter + 3, counter + 1]
-        counter += 4
+    for i in range(len(CRcurve)):
+        for j in range(len(CRcurve[0])):
+            vertices.append(CRcurve[i][j])
 
     return bs.Shape(vertices, indices)
+
+curve = createLine()
+
+    
+
+
+
+
+
+
+
+
+
+
+
 
 
 if __name__ == "__main__":
@@ -112,6 +179,7 @@ if __name__ == "__main__":
 
     # This shader program does not consider lighting
     colorPipeline = es.SimpleModelViewProjectionShaderProgram()
+    CurveShader = CurveShader()
 
     # Setting up the clear screen color
     glClearColor(0.85, 0.85, 0.85, 1.0)
@@ -129,7 +197,7 @@ if __name__ == "__main__":
 
     # Creating shapes on GPU memory
     gpuAxis = createGPUShape(colorPipeline, bs.createAxis(4))
-    gpuCurve = createGPUShape(colorPipeline, createCurve(1,0.5,0.7))
+    gpuCurve = createGPUShape(CurveShader, curve)
 
 
     t0 = glfw.get_time()
@@ -153,8 +221,8 @@ if __name__ == "__main__":
             
         projection = tr.perspective(45, float(width)/float(height), 0.1, 100)
 
-        camX = 2 * np.sin(camera_theta)
-        camY = 2 * np.cos(camera_theta)
+        camX = 10 * np.sin(camera_theta)
+        camY = 10 * np.cos(camera_theta)
 
         viewPos = np.array([camX,camY,2])
 
@@ -179,7 +247,7 @@ if __name__ == "__main__":
             glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
             glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
             glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
-            colorPipeline.drawCall(gpuCurve, GL_LINES)
+            colorPipeline.drawCall(gpuCurve, GL_LINE_STRIP)
 
 
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.

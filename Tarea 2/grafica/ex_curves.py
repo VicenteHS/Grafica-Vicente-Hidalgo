@@ -84,7 +84,7 @@ def evalCurveCR(Matrices, N):
         
     return Curvas
 
-print(evalCurveCR(CatmullRomMatrixL(Lista),20))
+#print(evalCurveCR(CatmullRomMatrixL(Lista),20))
 
 
 def CatmullRomMatrix(p0, p1, p2, p3):
@@ -134,6 +134,7 @@ def evalCurve(M, N):
 if __name__ == "__main__":
     
     hermiteCurve = evalCurve(CatmullRomMatrixL(Lista)[0], 20)
+    print(hermiteCurve)
     hermiteCurve2 = evalCurve(CatmullRomMatrixL(Lista)[1], 20)
     hermiteCurve3 = evalCurve(CatmullRomMatrixL(Lista)[2], 20)
     hermiteCurve4 = evalCurve(CatmullRomMatrixL(Lista)[3], 20)
