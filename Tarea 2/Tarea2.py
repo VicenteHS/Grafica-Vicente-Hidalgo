@@ -354,8 +354,8 @@ if __name__ == "__main__":
             
         projection = tr.perspective(45, float(width)/float(height), 0.1, 100)
 
-        camX = 1 * np.sin(camera_theta)
-        camY = 1 * np.cos(camera_theta)
+        camX = 2 * np.sin(camera_theta)
+        camY = 2 * np.cos(camera_theta)
 
         viewPos = np.array([camX,camY,2])
 

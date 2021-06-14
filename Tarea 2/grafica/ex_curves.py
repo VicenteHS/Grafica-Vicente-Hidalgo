@@ -34,6 +34,58 @@ def bezierMatrix(P0, P1, P2, P3):
     
     return np.matmul(G, Mb)
 
+
+#################################################
+#################################################
+#################################################
+#################################################
+#################################################
+#################################################
+
+Lista = [np.array([[3, 5, 0]]).T, #P0
+    np.array([[4, 2, 0]]).T,      #P1
+    np.array([[5, 6, 0]]).T,      #P2
+    np.array([[6, 7, 0]]).T,      #P3
+    np.array([[8, 5, 0]]).T,      #P4
+    np.array([[10, 10, 0]]).T]    #P5
+
+def CatmullRomMatrixL(L):
+    Matrices = []
+    for i in range(len(L)-3):
+
+        #Generate a matrix contatenating the columns
+        G = np.concatenate((L[i], L[i+1], L[i+2], L[i+3]), axis=1)
+
+        # Catmull-Rom vase matrix is a constant
+        Mcr = np.array([[0,-1/2,1,-1/2],[1,0,-5/2,3/2],[0,1/2,2,-3/2],[0,0,-1/2,1/2]])
+
+        Matrices.append(np.matmul(G,Mcr))
+    
+    return Matrices
+
+#print(CatmullRomMatrixL(Lista))
+
+def evalCurveCR(Matrices, N):
+    # The parameter t should move between 0 and 1
+    ts = np.linspace(0.0, 1.0, N)
+    
+    Curvas = []
+    for j in range(len(Matrices)):
+
+        M = Matrices[j]
+        # The computed value in R3 for each sample will be stored here
+        curve = np.ndarray(shape=(N, 3), dtype=float)
+    
+        for i in range(len(ts)):
+            T = generateT(ts[i])
+            curve[i, 0:3] = np.matmul(M, T).T
+            Curvas.append(curve)
+        
+    return Curvas
+
+print(evalCurveCR(CatmullRomMatrixL(Lista),20))
+
+
 def CatmullRomMatrix(p0, p1, p2, p3):
 
     #Generate a matrix contatenating the columns
@@ -43,6 +95,17 @@ def CatmullRomMatrix(p0, p1, p2, p3):
     Mcr = np.array([[0,-1/2,1,-1/2],[1,0,-5/2,3/2],[0,1/2,2,-3/2],[0,0,-1/2,1/2]])
 
     return np.matmul(G, Mcr)
+
+
+
+
+#################################################
+#################################################
+#################################################
+#################################################
+#################################################
+#################################################
+
 
 def plotCurve(ax, curve, label, color=(0,0,1)):
     
@@ -69,22 +132,7 @@ def evalCurve(M, N):
 
 if __name__ == "__main__":
     
-    """
-    Example for Hermite curve
-    """
-    
-    P1 = np.array([[0, 0, 1]]).T
-    P2 = np.array([[1, 0, 0]]).T
-    T1 = np.array([[10, 0, 0]]).T
-    T2 = np.array([[0, 10, 0]]).T
-    
-    GMh = hermiteMatrix(P1, P2, T1, T2)
-    print(GMh)
-    
-    # Number of samples to plot
-    N = 50
-    
-    hermiteCurve = evalCurve(GMh, N)
+    hermiteCurve = evalCurve(CatmullRomMatrixL(Lista)[0], 20)
     
     # Setting up the matplotlib display for 3D
     fig = mpl.figure()
@@ -93,16 +141,16 @@ if __name__ == "__main__":
     plotCurve(ax, hermiteCurve, "Hermite curve", (1,0,0))
     
     """
-    Example for Bezier curve
+    Example for CR curve Continues
     """
     
+    P5 = np.array([[8, 5, 0]]).T
     R0 = np.array([[0, 0, 1]]).T
     R1 = np.array([[0, 1, 0]]).T
     R2 = np.array([[1, 0, 1]]).T
     R3 = np.array([[1, 1, 0]]).T
     
-    GMb = bezierMatrix(R0, R1, R2, R3)
-    bezierCurve = evalCurve(GMb, N)
+    bezierCurve = evalCurve(CatmullRomMatrixL(Lista)[1], 20)
         
     plotCurve(ax, bezierCurve, "Bezier curve")
     
