@@ -116,44 +116,45 @@ def on_key(window, key, scancode, action, mods):
 ################################################################
 #Curves before tobogan
 
-def createLine():
-    Lista = [np.array([[-1, -1, 0]]).T,  #P0
-        np.array([[0, 0, 0]]).T,         #P1
-        np.array([[5, 6, 0]]).T,         #P2
-        np.array([[0, 12, 0]]).T,        #P3
-        np.array([[-5, 6, 0]]).T,        #P4
-        np.array([[-10, -2, 0]]).T,      #P5
-        np.array([[-5, 0, 0]]).T]        #P6
+def createLine(N):
+    Lista = [np.array([[-1, -1, 10]]).T,  #P0
+        np.array([[0, 0, 10]]).T,         #P1
+        np.array([[5, 6, 9]]).T,         #P2
+        np.array([[0, 12, 8]]).T,        #P3
+        np.array([[-5, 6, 7]]).T,        #P4
+        np.array([[-10, -2, 6]]).T,      #P5
+        np.array([[-5, 0, 5]]).T]        #P6
 
 
-    CRcurve = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[0], 20).tolist()
-    print(type(CRcurve))
-    CRcurve2 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[1], 20).tolist()
-    CRcurve3 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[2], 20).tolist()
-    CRcurve4 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[3], 20).tolist()
+    CRcurve = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[0], N).tolist()
+    CRcurve2 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[1], N).tolist()
+    CRcurve3 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[2], N).tolist()
+    CRcurve4 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[3], N).tolist()
 
     vertices = []
-    indices = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+    indices = []
+    for i in range(4*N-3):
+        indices.append(i)
+    print(indices)
 
     for i in range(len(CRcurve)):
         for j in range(len(CRcurve[0])):
             vertices.append(CRcurve[i][j])
+    for i in range(len(CRcurve)):
+        for j in range(len(CRcurve[0])):
+            vertices.append(CRcurve2[i][j])
+    for i in range(len(CRcurve)):
+        for j in range(len(CRcurve[0])):
+            vertices.append(CRcurve3[i][j])
+    for i in range(len(CRcurve)):
+        for j in range(len(CRcurve[0])):
+            vertices.append(CRcurve4[i][j])
 
     return bs.Shape(vertices, indices)
 
-curve = createLine()
+curve = createLine(50)
 
     
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -221,14 +222,14 @@ if __name__ == "__main__":
             
         projection = tr.perspective(45, float(width)/float(height), 0.1, 100)
 
-        camX = 10 * np.sin(camera_theta)
-        camY = 10 * np.cos(camera_theta)
+        camX = 20 * np.sin(camera_theta)
+        camY = 20 * np.cos(camera_theta)
 
-        viewPos = np.array([camX,camY,2])
+        viewPos = np.array([camX,camY,10])
 
         view = tr.lookAt(
             viewPos,
-            np.array([0,0,0]),
+            np.array([0,0,10]),
             np.array([0,0,1])
         )
 
