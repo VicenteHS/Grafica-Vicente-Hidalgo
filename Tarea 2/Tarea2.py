@@ -17,8 +17,6 @@ from grafica.assets_path import getAssetPath
 import grafica.scene_graph as sg
 import grafica.ex_curves as cv
 
-__author__ = "Daniel Calderon"
-__license__ = "MIT"
 
 
 LIGHT_FLAT    = 0
@@ -37,6 +35,7 @@ class Controller:
         self.rightClickOn = False
         self.mousePos = (0.0, 0.0)
         self.ITR = 0
+        self.ITR2 = 0
 
 ################################################################
 ################################################################
@@ -440,7 +439,7 @@ def createLine(N,Lista):
 curve = createLine(100,Lista)[0]
 vertex = []
 #List of List of List, but vertex has 1 less, it has the posicions.
-ver = createLine(100,Lista)[1]
+ver = createLine(50,Lista)[1]
 for i in range(len(ver)):
         for j in range(len(ver[0])):
             vertex.append(ver[i][j])
@@ -553,6 +552,9 @@ if __name__ == "__main__":
         if controller.ITR <= len(vertex)-1:
             translatedboat.transform = tr.translate(vertex[controller.ITR][0], vertex[controller.ITR][1], vertex[controller.ITR][2])
             controller.ITR +=1
+        if controller.ITR > (len(vertex)-1)/10:
+            controller.ITR2 = controller.ITR -40
+
 
 
         # Initial Camera
@@ -584,7 +586,7 @@ if __name__ == "__main__":
             projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
 
             view = tr.lookAt(
-                np.array([translatedboat.transform[0][3]-2, translatedboat.transform[1][3], translatedboat.transform[2][3]+3]),
+                np.array([vertex[controller.ITR2][0], vertex[controller.ITR2][1], vertex[controller.ITR2][2]+3]),
                 np.array([translatedboat.transform[0][3], translatedboat.transform[1][3], translatedboat.transform[2][3]]),
                 np.array([0,0,1])
             )
