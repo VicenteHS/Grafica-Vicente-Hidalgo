@@ -31,8 +31,16 @@ class Controller:
     def __init__(self):
         self.fillPolygon = True
         self.showAxis = True
-        self.lightingModel = LIGHT_FLAT
+        self.lightingModel = LIGHT_PHONG
+        self.Camera2 = False
+        self.leftClickOn = False
+        self.rightClickOn = False
+        self.mousePos = (0.0, 0.0)
+        self.ITR = 0
 
+################################################################
+################################################################
+################################################################
 #SHADER MODIFICADO PARA CREAR LINEAS
 class CurveShader:
 
@@ -41,13 +49,17 @@ class CurveShader:
         vertex_shader = """
             #version 130
 
+            uniform mat4 projection;
+            uniform mat4 view;
+            uniform mat4 model;
+
             in vec3 position;
 
             out vec3 newColor;
             void main()
             {
-                gl_Position = vec4(position, 1.0f);
-                newColor = vec3(1,0,0);
+                gl_Position = projection * view * model * vec4(position, 1.0f);
+                newColor = vec3(0,0,1);
             }
             """
 
@@ -122,7 +134,46 @@ def on_key(window, key, scancode, action, mods):
     elif key == glfw.KEY_ESCAPE:
         glfw.set_window_should_close(window, True)
 
+    elif key == glfw.KEY_C:
+        controller.Camera2 = not controller.Camera2
 
+################################################################
+################################################################
+################################################################
+# Mouse definition
+
+# Aca se define la posicion del mouse
+def cursor_pos_callback(window, x, y):
+    global controller
+    controller.mousePos = (x,y)
+
+# Aca se definen los botones del mouse
+def mouse_button_callback(window, button, action, mods):
+
+    global controller
+    
+    """
+    glfw.MOUSE_BUTTON_1: left click
+    glfw.MOUSE_BUTTON_2: right click
+    """
+
+    if (action == glfw.PRESS or action == glfw.REPEAT):
+        if (button == glfw.MOUSE_BUTTON_1):
+            controller.leftClickOn = True
+
+
+        if (button == glfw.MOUSE_BUTTON_2):
+            controller.rightClickOn = True
+
+    elif (action ==glfw.RELEASE):
+        if (button == glfw.MOUSE_BUTTON_1):
+            controller.leftClickOn = False
+
+        if (button == glfw.MOUSE_BUTTON_2):
+            controller.rightClickOn = False
+
+
+################################################################
 ################################################################
 ################################################################
 #Creating a boat for the tobogan.
@@ -301,37 +352,57 @@ def CompleteBoat():
     DefBoat.transform = tr.scale(0.5, 0.5, 0.5)
     DefBoat.childs = [base, mastil, TranslatedFlag]
 
-    return DefBoat
+    # TranslatedDefBoat
+    TranslatedDefBoat = sg.SceneGraphNode("TranslatedDefBoat")
+    TranslatedDefBoat.transform = tr.translate(0,0,0)
+    TranslatedDefBoat.childs += [DefBoat]
+
+    return TranslatedDefBoat
 
 
 
 
 
+################################################################
 ################################################################
 ################################################################
 #Curves before tobogan
+Lista = [np.array([[-1, -1, 10]]).T,       #P0
+        np.array([[3, 3, 10]]).T,          #P1
+        np.array([[-3, 3, 9]]).T,          #P2
+        np.array([[-3, -3, 8]]).T,         #P3
+        np.array([[3, -3, 7]]).T,          #P4
+        np.array([[5, 5, 6]]).T,           #P5
+        np.array([[1, 4, 5]]).T,           #P6
+        np.array([[-3,-2,4]]).T,           #P7
+        np.array([[1,-2,3]]).T,            #P8
+        np.array([[3,3,2]]).T,             #P9
+        np.array([[-3,3,1]]).T,            #P10
+        np.array([[0,0,0]]).T,             #P11
+        np.array([[-1, -1, 0]]).T]         #P12
 
-def createLine(N):
-    Lista = [np.array([[0, 0, 10]]).T,     #P0
-        np.array([[3, 3, 9]]).T,           #P1
-        np.array([[-3, 3, 8]]).T,          #P2
-        np.array([[-3, -3, 7]]).T,         #P3
-        np.array([[3, -3, 5]]).T,          #P4
-        np.array([[5, 5, 3]]).T,           #P5
-        np.array([[2, 2, 2]]).T,           #P6
-        np.array([[3, 3, 0]]).T]           #P7
+def createLine(N,Lista):
+    
 
 
-    CRcurve = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[0], N).tolist()
-    CRcurve2 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[1], N).tolist()
-    CRcurve3 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[2], N).tolist()
-    CRcurve4 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[3], N).tolist()
-    CRcurve5 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[4], N).tolist()
+    CRcurve = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[0], N).tolist()    #C1
+    CRcurve2 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[1], N).tolist()   #C2
+    CRcurve3 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[2], N).tolist()   #C3
+    CRcurve4 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[3], N).tolist()   #C4
+    CRcurve5 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[4], N).tolist()   #C5
+    CRcurve6 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[5], N).tolist()   #C6
+    CRcurve7 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[6], N).tolist()   #C7
+    CRcurve8 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[7], N).tolist()   #C8
+    CRcurve9 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[8], N).tolist()   #C9
+    CRcurve10 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[9], N).tolist()  #C10
+    ver = [CRcurve, CRcurve2, CRcurve3, CRcurve4, CRcurve5, 
+            CRcurve6, CRcurve7, CRcurve8, CRcurve9, CRcurve10]
 
     vertices = []
     indices = []
-    for i in range(5*N-4):
+    for i in range(10*N-9):
         indices.append(i)
+    print(indices)
 
     for i in range(len(CRcurve)):
         for j in range(len(CRcurve[0])):
@@ -348,10 +419,37 @@ def createLine(N):
     for i in range(len(CRcurve)):
         for j in range(len(CRcurve[0])):
             vertices.append(CRcurve5[i][j])
+    for i in range(len(CRcurve)):
+        for j in range(len(CRcurve[0])):
+            vertices.append(CRcurve6[i][j])
+    for i in range(len(CRcurve)):
+        for j in range(len(CRcurve[0])):
+            vertices.append(CRcurve7[i][j])
+    for i in range(len(CRcurve)):
+        for j in range(len(CRcurve[0])):
+            vertices.append(CRcurve8[i][j])
+    for i in range(len(CRcurve)):
+        for j in range(len(CRcurve[0])):
+            vertices.append(CRcurve9[i][j])
+    for i in range(len(CRcurve)):
+        for j in range(len(CRcurve[0])):
+            vertices.append(CRcurve10[i][j])
 
-    return bs.Shape(vertices, indices)
+    return bs.Shape(vertices, indices), ver
 
-curve = createLine(10)
+curve = createLine(100,Lista)[0]
+vertex = []
+#List of List of List, but vertex has 1 less, it has the posicions.
+ver = createLine(100,Lista)[1]
+for i in range(len(ver)):
+        for j in range(len(ver[0])):
+            vertex.append(ver[i][j])
+# So vertex has the positions of our curve
+
+
+
+
+
 
 
 
@@ -375,7 +473,14 @@ if __name__ == "__main__":
 
     # Connecting the callback function 'on_key' to handle keyboard events
     glfw.set_key_callback(window, on_key)
+    # Mouse a glfw.
+    glfw.set_cursor_pos_callback(window, cursor_pos_callback)
+    glfw.set_mouse_button_callback(window, mouse_button_callback)
 
+    ###########################################################################
+    ###########################################################################
+    ###########################################################################
+    # Pipelines
     # Different shader programs for different lighting strategies
     textureFlatPipeline = ls.SimpleTextureFlatShaderProgram()
     textureGouraudPipeline = ls.SimpleTextureGouraudShaderProgram()
@@ -385,7 +490,7 @@ if __name__ == "__main__":
     colorPipeline = es.SimpleModelViewProjectionShaderProgram()
 
     # This shader program is used for drawing a line
-    CurveShader = CurveShader()
+    curvePipeline = CurveShader()
 
     # Setting up the clear screen color
     glClearColor(0.85, 0.85, 0.85, 1.0)
@@ -403,7 +508,7 @@ if __name__ == "__main__":
 
     # Creating shapes on GPU memory
     gpuAxis = createGPUShape(colorPipeline, bs.createAxis(4))
-    gpuCurve = createGPUShape(colorPipeline, curve)
+    gpuCurve = createGPUShape(curvePipeline, curve)
 
     # Creating Scenegraph of a CompleteBoat
     CompleteBoat = CompleteBoat()
@@ -411,34 +516,78 @@ if __name__ == "__main__":
     t0 = glfw.get_time()
     camera_theta = np.pi/4
 
+
+
+    ###########################################################################
+    ###########################################################################
+    ###########################################################################
+    #Star while
+    ###########################################################################
+    ###########################################################################
+    ###########################################################################
+
+
     while not glfw.window_should_close(window):
 
         # Using GLFW to check for input events
         glfw.poll_events()
+
+        # Getting the mouse location in opengl coordinates
+        mousePosX = 2 * (controller.mousePos[0] - width/2) / width
+        mousePosY = 2 * (height/2 - controller.mousePos[1]) / height
 
         # Getting the time difference from the previous iteration
         t1 = glfw.get_time()
         dt = t1 - t0
         t0 = t1
 
+        #Rotate Flag from the boat
+        rotatedflag = sg.findNode(CompleteBoat, "RotatedFlag")
+        rotatedflag.transform = tr.rotationZ(t1)
+
+        #CKECK THIS !!!!!---------------------------------------------------------------------
+        #Translate Boat
+        translatedboat = sg.findNode(CompleteBoat, "TranslatedDefBoat")
+
+
+        if controller.ITR <= len(vertex)-1:
+            translatedboat.transform = tr.translate(vertex[controller.ITR][0], vertex[controller.ITR][1], vertex[controller.ITR][2])
+            controller.ITR +=1
+
+
+        # Initial Camera
         if (glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS):
             camera_theta -= 2 * dt
 
         if (glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS):
             camera_theta += 2* dt
             
-        projection = tr.perspective(45, float(width)/float(height), 0.1, 100)
+        projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
 
         camX = 10 * np.sin(camera_theta)
         camY = 10 * np.cos(camera_theta)
 
-        viewPos = np.array([camX,camY,2])
+        # First case of Camera
+        if not controller.Camera2:
 
-        view = tr.lookAt(
-            viewPos,
-            np.array([0,0,0]),
-            np.array([0,0,1])
-        )
+
+            viewPos = np.array([camX,camY,5])
+
+            view = tr.lookAt(
+                viewPos,
+                np.array([0,0,0]),
+                np.array([0,0,1])
+            )
+        
+        # Second case of Camera
+        if controller.Camera2:
+            projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
+
+            view = tr.lookAt(
+                np.array([translatedboat.transform[0][3]-2, translatedboat.transform[1][3], translatedboat.transform[2][3]+3]),
+                np.array([translatedboat.transform[0][3], translatedboat.transform[1][3], translatedboat.transform[2][3]]),
+                np.array([0,0,1])
+            )
 
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -451,11 +600,17 @@ if __name__ == "__main__":
 
         # The axis is drawn without lighting effects
         if controller.showAxis:
+            glUseProgram(curvePipeline.shaderProgram)
+            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
+            colorPipeline.drawCall(gpuCurve, GL_LINE_STRIP)
+
             glUseProgram(colorPipeline.shaderProgram)
             glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
             glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-            glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(0.3))
-            colorPipeline.drawCall(gpuCurve, GL_LINE_STRIP)
+            glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
+            colorPipeline.drawCall(gpuAxis, GL_LINES)
         
         
         # Selecting the lighting shader program

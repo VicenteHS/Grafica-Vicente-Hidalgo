@@ -134,7 +134,7 @@ def evalCurve(M, N):
 if __name__ == "__main__":
     
     hermiteCurve = evalCurve(CatmullRomMatrixL(Lista)[0], 20)
-    print(hermiteCurve)
+
     hermiteCurve2 = evalCurve(CatmullRomMatrixL(Lista)[1], 20)
     hermiteCurve3 = evalCurve(CatmullRomMatrixL(Lista)[2], 20)
     hermiteCurve4 = evalCurve(CatmullRomMatrixL(Lista)[3], 20)
