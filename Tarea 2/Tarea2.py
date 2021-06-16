@@ -378,22 +378,22 @@ Lista = [np.array([[-1, -1, 10]]).T,       #P0
         np.array([[3,3,2]]).T,             #P9
         np.array([[-3,3,1]]).T,            #P10
         np.array([[0,0,0]]).T,             #P11
-        np.array([[-1, -1, 0]]).T]         #P12
+        np.array([[-1, -1, -1]]).T]         #P12
 
 def createLine(N,Lista):
     
 
 
-    CRcurve = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[0], N).tolist()    #C1
-    CRcurve2 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[1], N).tolist()   #C2
-    CRcurve3 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[2], N).tolist()   #C3
-    CRcurve4 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[3], N).tolist()   #C4
-    CRcurve5 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[4], N).tolist()   #C5
-    CRcurve6 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[5], N).tolist()   #C6
-    CRcurve7 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[6], N).tolist()   #C7
-    CRcurve8 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[7], N).tolist()   #C8
-    CRcurve9 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[8], N).tolist()   #C9
-    CRcurve10 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[9], N).tolist()  #C10
+    CRcurve = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[0], N)    #C1
+    CRcurve2 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[1], N)   #C2
+    CRcurve3 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[2], N)   #C3
+    CRcurve4 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[3], N)   #C4
+    CRcurve5 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[4], N)   #C5
+    CRcurve6 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[5], N)   #C6
+    CRcurve7 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[6], N)   #C7
+    CRcurve8 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[7], N)   #C8
+    CRcurve9 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[8], N)   #C9
+    CRcurve10 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[9], N)  #C10
     ver = [CRcurve, CRcurve2, CRcurve3, CRcurve4, CRcurve5, 
             CRcurve6, CRcurve7, CRcurve8, CRcurve9, CRcurve10]
 
@@ -401,7 +401,6 @@ def createLine(N,Lista):
     indices = []
     for i in range(10*N-9):
         indices.append(i)
-    print(indices)
 
     for i in range(len(CRcurve)):
         for j in range(len(CRcurve[0])):
@@ -439,11 +438,46 @@ def createLine(N,Lista):
 curve = createLine(100,Lista)[0]
 vertex = []
 #List of List of List, but vertex has 1 less, it has the posicions.
-ver = createLine(50,Lista)[1]
+ver = createLine(50,Lista)[1]                                           #HERE you can change the velocity of the boat
 for i in range(len(ver)):
         for j in range(len(ver[0])):
             vertex.append(ver[i][j])
 # So vertex has the positions of our curve
+
+def perpendicular_vector(v):
+    #A vector is perpendicular to other vector when dot product equal 0.
+
+    if v[0] == v[1] == v[2] == 0:
+        raise ValueError('zero vector')
+    if v[0] == 0:
+        return np.array([1,0,0])
+    if v[1] == 0:
+        return np.array([0,1,0])
+    if v[2] == 0:
+        return np.array([0,0,1])
+    
+    # Solvin the equation of a dot product, using arbitrarily some parameters as 1.
+    return np.array([1,1,-1.0*(v[0]+v[1])/v[2]])
+
+def perpendicular_plane(V,U):
+    # It receives 2 normal vectors. V is the normal vector that we won´t use
+    return [U,np.cross(V,U)]
+
+def createLines(vertex):
+    Normals = []
+    i = 0
+    while i < len(vertex)-1:
+        print(i)
+        NormalVector = vertex[i+1] - vertex[i]
+        PerpendicularVector = perpendicular_vector(NormalVector)
+        PerpendicularPlane = perpendicular_plane(NormalVector, PerpendicularVector)
+        Normals.append(PerpendicularPlane)
+        i += (int(len(vertex)/50))                        #HERE you can change the number of circles in the tobogan.
+    return Normals
+
+print (createLines(vertex))
+    #Hay que encontrar el plano tangente o algun vector ortogonal al vector desplazamiento y luego generar unos 6 puntos circulares a el, 
+    #hacer eso por cada linea y formar el tobogan
 
 
 
@@ -513,7 +547,7 @@ if __name__ == "__main__":
     CompleteBoat = CompleteBoat()
 
     t0 = glfw.get_time()
-    camera_theta = np.pi/4
+
 
 
 
@@ -555,38 +589,25 @@ if __name__ == "__main__":
         if controller.ITR > (len(vertex)-1)/10:
             controller.ITR2 = controller.ITR -40
 
-
-
-        # Initial Camera
-        if (glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS):
-            camera_theta -= 2 * dt
-
-        if (glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS):
-            camera_theta += 2* dt
-            
-        projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
-
-        camX = 10 * np.sin(camera_theta)
-        camY = 10 * np.cos(camera_theta)
-
         # First case of Camera
         if not controller.Camera2:
 
-
-            viewPos = np.array([camX,camY,5])
+            projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
+            viewPos = np.array([-10,-10,0])
 
             view = tr.lookAt(
                 viewPos,
-                np.array([0,0,0]),
+                np.array([0,0,5]),
                 np.array([0,0,1])
             )
         
         # Second case of Camera
         if controller.Camera2:
             projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
+            viewPos = np.array([vertex[controller.ITR2][0], vertex[controller.ITR2][1], vertex[controller.ITR2][2]+3])
 
             view = tr.lookAt(
-                np.array([vertex[controller.ITR2][0], vertex[controller.ITR2][1], vertex[controller.ITR2][2]+3]),
+                viewPos,
                 np.array([translatedboat.transform[0][3], translatedboat.transform[1][3], translatedboat.transform[2][3]]),
                 np.array([0,0,1])
             )
@@ -661,7 +682,5 @@ if __name__ == "__main__":
 
     # freeing GPU memory
     gpuAxis.clear()
-    gpuDice.clear()
-    gpuDiceBlue.clear()
 
     glfw.terminate()
