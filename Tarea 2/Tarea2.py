@@ -459,29 +459,29 @@ def perpendicular_vector(v):
     # Solvin the equation of a dot product, using arbitrarily some parameters as 1.
     return np.array([1,1,-1.0*(v[0]+v[1])/v[2]])
 
-def perpendicular_plane(V,U):
-    # It receives 2 normal vectors. V is the normal vector that we won´t use
-    return [U,np.cross(V,U)]
-
 def createLines(vertex):
-    Normals = []
     i = 0
+    R = 2                                                # Radio of the tobogan
+    CircleNodes = 8                                      # Number of vertices of the tobogan
+    dphi = 2*np.pi /8
+    phi = 0
+    puntos = []
     while i < len(vertex)-1:
-        print(i)
-        NormalVector = vertex[i+1] - vertex[i]
-        PerpendicularVector = perpendicular_vector(NormalVector)
-        PerpendicularPlane = perpendicular_plane(NormalVector, PerpendicularVector)
-        Normals.append(PerpendicularPlane)
+        NormalVector = vertex[i+1] - vertex[i] / np.linalg.norm(vertex[i+1] - vertex[i])
+        PerpendicularVector = perpendicular_vector(NormalVector) / np.linalg.norm(perpendicular_vector(NormalVector))
+        PerpendicularVector2 = np.cross(NormalVector,PerpendicularVector) / np.linalg.norm(np.cross(NormalVector,PerpendicularVector))
+        puntosCirculos = []
+        while phi <= 2*np.pi - dphi:
+            Punto = R*np.cos(phi) * PerpendicularVector + R*np.sin(phi) * PerpendicularVector2[1]
+            puntosCirculos.append(Punto)
+            phi += dphi
+        puntos.append(puntosCirculos) 
+        phi = 0
         i += (int(len(vertex)/50))                        #HERE you can change the number of circles in the tobogan.
-    return Normals
 
-print (createLines(vertex))
-    #Hay que encontrar el plano tangente o algun vector ortogonal al vector desplazamiento y luego generar unos 6 puntos circulares a el, 
-    #hacer eso por cada linea y formar el tobogan
+    return puntos
 
-
-
-
+print(createLines(vertex))
 
 
 

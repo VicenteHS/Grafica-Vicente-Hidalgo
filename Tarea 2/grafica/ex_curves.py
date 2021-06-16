@@ -132,6 +132,25 @@ def evalCurve(M, N):
     return curve
 
 if __name__ == "__main__":
+
+    asd = mpl.figure(figsize=(4,4))
+
+    ax = asd.add_subplot(111, projection='3d')
+
+    ax.scatter(3+1.30192498, 3+ 1.30192498, 10-0.78101388) # plot the point (2,3,4) on the figure
+    ax.scatter(3-0.07948675, 3-0.07948675, 10-1.55234694) # plot the point (2,3,4) on the figure
+    ax.scatter(3-1.41433622, 3-1.41433622, 10-1.41433622) # plot the point (2,3,4) on the figure
+    ax.scatter(3-1.92068671, 3-1.92068671, 10-0.44782652) # plot the point (2,3,4) on the figure
+    ax.scatter(3-1.30192498, 3-1.30192498, 10+ 0.78101388) # plot the point (2,3,4) on the figure
+    ax.scatter(3+0.07948675, 3+0.07948675,10+ 1.55234694) # plot the point (2,3,4) on the figure
+    ax.scatter(3+1.41433622, 3+1.41433622,10+ 1.41433622) # plot the point (2,3,4) on the figure
+    ax.scatter(3+1.41433622, 3+1.41433622,10+ 1.41433622) # plot the point (2,3,4) on the figure
+    ax.scatter(3,3,10) # plot the point (2,3,4) on the figure
+
+
+
+    mpl.show()
+
     
     hermiteCurve = evalCurve(CatmullRomMatrixL(Lista)[0], 20)
 
