@@ -366,20 +366,22 @@ def CompleteBoat():
 ################################################################
 ################################################################
 #Curves before tobogan
-Lista = [np.array([[-1, -1, 10]]).T,       #P0
-        np.array([[3, 3, 10]]).T,          #P1
-        np.array([[-3, 3, 9]]).T,          #P2
-        np.array([[-3, -3, 8]]).T,         #P3
-        np.array([[3, -3, 7]]).T,          #P4
-        np.array([[5, 5, 6]]).T,           #P5
-        np.array([[1, 4, 5]]).T,           #P6
-        np.array([[-3,-2,4]]).T,           #P7
-        np.array([[1,-2,3]]).T,            #P8
-        np.array([[3,3,2]]).T,             #P9
-        np.array([[-3,3,1]]).T,            #P10
-        np.array([[0,0,0]]).T,             #P11
-        np.array([[-1, -1, -1]]).T]         #P12
+Lista = [np.array([[0, 0, 10]]).T,       #P0
+        np.array([[5, 5, 10]]).T,          #P1
+        np.array([[10, 5, 9]]).T,          #P2
+        np.array([[15, 8, 8]]).T,         #P3
+        np.array([[20, 25, 7]]).T,          #P4
+        np.array([[30, 30, 6]]).T,           #P5
+        np.array([[40, 48, 5]]).T,           #P6
+        np.array([[55,52,4]]).T,           #P7
+        np.array([[60,53,3]]).T,            #P8
+        np.array([[65,53,2]]).T,             #P9
+        np.array([[70,60,1]]).T,            #P10
+        np.array([[80,80,0]]).T,             #P11
+        np.array([[90, 90, -1]]).T]         #P12
 
+
+# This function generates a spline of catmul roll that defines the movement and also is a reference for the tobogan
 def createLine(N,Lista):
     
 
@@ -438,12 +440,14 @@ def createLine(N,Lista):
 curve = createLine(100,Lista)[0]
 vertex = []
 #List of List of List, but vertex has 1 less, it has the posicions.
-ver = createLine(50,Lista)[1]                                           #HERE you can change the velocity of the boat
+ver = createLine(1000,Lista)[1]                                           #HERE you can change the velocity of the boat
 for i in range(len(ver)):
         for j in range(len(ver[0])):
             vertex.append(ver[i][j])
 # So vertex has the positions of our curve
 
+
+# This function generates a normal vector 
 def perpendicular_vector(v):
     #A vector is perpendicular to other vector when dot product equal 0.
 
@@ -459,9 +463,11 @@ def perpendicular_vector(v):
     # Solvin the equation of a dot product, using arbitrarily some parameters as 1.
     return np.array([1,1,-1.0*(v[0]+v[1])/v[2]])
 
+
+# This function generates all the points for the tobogan
 def createLines(vertex):
     i = 0
-    R = 2                                                # Radio of the tobogan
+    R = 10                                                # Radio of the tobogan
     CircleNodes = 8                                      # Number of vertices of the tobogan
     dphi = 2*np.pi /8
     phi = 0
@@ -473,15 +479,45 @@ def createLines(vertex):
         puntosCirculos = []
         while phi <= 2*np.pi - dphi:
             Punto = R*np.cos(phi) * PerpendicularVector + R*np.sin(phi) * PerpendicularVector2[1]
-            puntosCirculos.append(Punto)
+            puntosCirculos.append(Punto + vertex[i])      # OJO CAMBIO PARA MOVER LOS VERTICES
             phi += dphi
         puntos.append(puntosCirculos) 
         phi = 0
         i += (int(len(vertex)/50))                        #HERE you can change the number of circles in the tobogan.
 
     return puntos
+# puntos works as a list, each element of it is a list with a group of np.arrays.
+#each one of this in lists represents one circle
 
-print(createLines(vertex))
+
+LINES = createLines(vertex)
+
+
+
+# Function that creates the tobogan
+def createTobogan(LINES):
+    # Defining locations and texture coordinates for each vertex of the shape
+    indices = []
+    vertices = []
+    VerCirc = len(LINES[0])               # Cantidad de vertices circulo
+    counter = 0                           # keeps 
+    for i in range(len(LINES)-1):         # i iterates changing circles
+        Circle = LINES[i]
+        Circle2 = LINES[i+1]
+        for j in range(VerCirc-1):
+            vertices += [Circle[j][0], Circle[j][1], Circle[j][2]]
+            if i == len(LINES)-1:
+                vertices += [Circle2[j][0], Circle2[j][1], Circle2[j][2]]
+            indices += [j + counter, j + VerCirc + counter, j + 1 + counter]
+            indices += [j + VerCirc + counter, j + 1 + counter, j + VerCirc + 1 + counter]
+        counter += VerCirc
+    print(vertices)
+    
+    return bs.Shape(vertices, indices)
+
+Tobogan = createTobogan(LINES)
+            
+
 
 
 
@@ -542,6 +578,7 @@ if __name__ == "__main__":
     # Creating shapes on GPU memory
     gpuAxis = createGPUShape(colorPipeline, bs.createAxis(4))
     gpuCurve = createGPUShape(curvePipeline, curve)
+    gpuTobogan = createGPUShape(curvePipeline, Tobogan)
 
     # Creating Scenegraph of a CompleteBoat
     CompleteBoat = CompleteBoat()
@@ -628,6 +665,12 @@ if __name__ == "__main__":
             glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
             glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
             colorPipeline.drawCall(gpuCurve, GL_LINE_STRIP)
+
+            glUseProgram(curvePipeline.shaderProgram)
+            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
+            colorPipeline.drawCall(gpuTobogan)
 
             glUseProgram(colorPipeline.shaderProgram)
             glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
