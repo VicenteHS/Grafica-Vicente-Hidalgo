@@ -398,8 +398,7 @@ def createLine(N,Lista):
     CRcurve8 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[7], N)   #C8
     CRcurve9 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[8], N)   #C9
     CRcurve10 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[9], N)  #C10
-    #ver =np.array([CRcurve, CRcurve2, CRcurve3, CRcurve4, CRcurve5, 
-    #        CRcurve6, CRcurve7, CRcurve8, CRcurve9, CRcurve10])
+
     ver = np.concatenate((CRcurve[0:-1,:],
                           CRcurve2[0:-1,:],
                           CRcurve3[0:-1,:],
@@ -420,8 +419,9 @@ def createLine(N,Lista):
 
 curve = createLine(100,Lista)[0]                                            
 #List of List of List, but vertex has 1 less, it has the posicions.
-vertex = createLine(50,Lista)[1]                                           #HERE you can change the velocity of the boat
-vertex2 = createLine(200,Lista)[1]                                           #HERE you can change the number of points of the tobogan
+vertex = createLine(100,Lista)[1]                            #HERE you can change the velocity of the boat
+vertex2 = createLine(30,Lista)[1]                            #HERE you can change the number of points of the tobogan, 30 is good
+                                                             
 # So vertex has the positions of our curve
 
 
@@ -465,17 +465,17 @@ def createLines(vertex):
 #each one of this in lists represents one circle
 
 
-LINES = createLines(vertex)
+LINES = createLines(vertex2)
 
 
 
 
 # Function that creates the tobogan
-def createTobogan(LINES):
+def createTobogan(LINES, vertex2):
     # Defining locations and texture coordinates for each vertex of the shape
 
     #vertices = LINES.reshape(1,np.size(LINES)).tolist()[0]
-
+ 
     indices = []
     vertices = []
     VerCirc = len(LINES[0])               # Cantidad de vertices circulo
@@ -484,9 +484,13 @@ def createTobogan(LINES):
         Circle = LINES[i]
         Circle2 = LINES[i+1]
         for j in range(VerCirc):
-            vertices += [Circle[j][0], Circle[j][1], Circle[j][2]]
+            vertices += [Circle[j][0], Circle[j][1], Circle[j][2], 
+                         j%2,i%2,
+                         (vertex2[i]- Circle[j])[0],(vertex2[i]- Circle[j])[1],(vertex2[i]- Circle[j])[2]]
             if i == len(LINES)-2:         # To have the end of the tobogan
-                vertices += [Circle2[j][0], Circle2[j][1], Circle2[j][2]]
+                vertices += [Circle2[j][0], Circle2[j][1], Circle2[j][2], 
+                         j%2,i%2,
+                         (vertex2[i]- Circle2[j])[0],(vertex2[i]- Circle2[j])[1],(vertex2[i]- Circle2[j])[2]]
             if i <= len(LINES)-4:         # This makes the end looks grate
                 indices += [j + counter, j + VerCirc + counter, j + 1 + counter]
                 indices += [j + VerCirc + counter, j + 1 + counter, j + VerCirc + 1 + counter]
@@ -495,7 +499,7 @@ def createTobogan(LINES):
 
     return bs.Shape(vertices, indices)
 
-Tobogan = createTobogan(LINES)
+Tobogan = createTobogan(LINES, vertex2)
             
 
 
@@ -558,7 +562,10 @@ if __name__ == "__main__":
     # Creating shapes on GPU memory
     gpuAxis = createGPUShape(colorPipeline, bs.createAxis(4))
     gpuCurve = createGPUShape(curvePipeline, curve)
-    gpuTobogan = createGPUShape(curvePipeline, Tobogan)
+    lightingPipeline = texturePhongPipeline
+    gpuTobogan = createGPUShape(lightingPipeline, Tobogan)
+    gpuTobogan.texture = es.textureSimpleSetup(
+        getAssetPath("madera.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
 
     # Creating Scenegraph of a CompleteBoat
     CompleteBoat = CompleteBoat()
@@ -639,17 +646,17 @@ if __name__ == "__main__":
 
         # The axis is drawn without lighting effects
         if controller.showAxis:
-            # glUseProgram(curvePipeline.shaderProgram)
-            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
-            # colorPipeline.drawCall(gpuCurve, GL_LINE_STRIP)
-
             glUseProgram(curvePipeline.shaderProgram)
             glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
             glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
             glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
-            colorPipeline.drawCall(gpuTobogan)
+            colorPipeline.drawCall(gpuCurve, GL_LINE_STRIP)
+
+            # glUseProgram(curvePipeline.shaderProgram)
+            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
+            # colorPipeline.drawCall(gpuTobogan)
 
             # glUseProgram(colorPipeline.shaderProgram)
             # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
@@ -698,6 +705,11 @@ if __name__ == "__main__":
         # Drawing
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.translate(0.75,0,0))
         sg.drawSceneGraphNode(CompleteBoat, lightingPipeline, "model")
+
+        # Drawing
+        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        lightingPipeline.drawCall(gpuTobogan)
+
 
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
         glfw.swap_buffers(window)
