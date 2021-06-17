@@ -476,19 +476,6 @@ def createTobogan(LINES):
 
     #vertices = LINES.reshape(1,np.size(LINES)).tolist()[0]
 
-
-    # indices = []
-    # VerCirc = len(LINES[0])               # Cantidad de vertices circulo
-    # counter = 0                           # keeps 
-    # for i in range(len(LINES)-1):         # i iterates changing circles
-    #     Circle = LINES[i]
-    #     Circle2 = LINES[i+1]
-    #     for j in range(VerCirc):
-    #         indices += [j + counter, j + VerCirc + counter, j + 1 + counter]
-    #         indices += [j + VerCirc + counter, j + 1 + counter, VerCirc + j + 1 + counter]
-
-    #     counter += VerCirc 
-
     indices = []
     vertices = []
     VerCirc = len(LINES[0])               # Cantidad de vertices circulo
@@ -498,12 +485,14 @@ def createTobogan(LINES):
         Circle2 = LINES[i+1]
         for j in range(VerCirc):
             vertices += [Circle[j][0], Circle[j][1], Circle[j][2]]
-            if i == len(LINES)-1:
+            if i == len(LINES)-2:         # To have the end of the tobogan
                 vertices += [Circle2[j][0], Circle2[j][1], Circle2[j][2]]
-            indices += [j + counter, j + VerCirc + counter, j + 1 + counter]
-            indices += [j + VerCirc + counter, j + 1 + counter, j + VerCirc + 1 + counter]
+            if i <= len(LINES)-4:         # This makes the end looks grate
+                indices += [j + counter, j + VerCirc + counter, j + 1 + counter]
+                indices += [j + VerCirc + counter, j + 1 + counter, j + VerCirc + 1 + counter]
 
         counter += VerCirc
+
     return bs.Shape(vertices, indices)
 
 Tobogan = createTobogan(LINES)
