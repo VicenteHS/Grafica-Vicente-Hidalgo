@@ -37,6 +37,8 @@ class Controller:
         self.ITR = 0
         self.ITR2 = 0
 
+
+
 ################################################################
 ################################################################
 ################################################################
@@ -58,7 +60,7 @@ class CurveShader:
             void main()
             {
                 gl_Position = projection * view * model * vec4(position, 1.0f);
-                newColor = vec3(0,0,1);
+                newColor = vec3(1,0,0);
             }
             """
 
@@ -378,7 +380,7 @@ Lista = [np.array([[0, 0, 10]]).T,       #P0
         np.array([[65,53,2]]).T,             #P9
         np.array([[70,60,1]]).T,            #P10
         np.array([[80,80,0]]).T,             #P11
-        np.array([[90, 90, -1]]).T]         #P12
+        np.array([[90, 90, 0]]).T]         #P12
 
 
 # This function generates a spline of catmul roll that defines the movement and also is a reference for the tobogan
@@ -416,9 +418,10 @@ def createLine(N,Lista):
 
     return bs.Shape(vertices, indices), ver
 
-curve = createLine(100,Lista)[0]
+curve = createLine(100,Lista)[0]                                            
 #List of List of List, but vertex has 1 less, it has the posicions.
-vertex = createLine(100,Lista)[1]                                           #HERE you can change the velocity of the boat
+vertex = createLine(50,Lista)[1]                                           #HERE you can change the velocity of the boat
+vertex2 = createLine(200,Lista)[1]                                           #HERE you can change the number of points of the tobogan
 # So vertex has the positions of our curve
 
 
@@ -441,9 +444,9 @@ def perpendicular_vector(v):
 
 # This function generates all the points for the tobogan
 def createLines(vertex):
-    R = 10                                               # Radio of the tobogan
-    CircleNodes = 8                                      # Number of vertices of the tobogan
-    phi = np.linspace(0,2*np.pi,CircleNodes)[0:-1]
+    R = 5                                               # Radio of the tobogan
+    CircleNodes = 16                                      # Number of vertices of the tobogan
+    phi = np.linspace(0,2*np.pi,CircleNodes)[0:]        # CKECK CHANGE
 
     Puntos = np.zeros((np.size(vertex,0)-1,len(phi),3))
 
@@ -463,13 +466,29 @@ def createLines(vertex):
 
 
 LINES = createLines(vertex)
-print(LINES)
+
 
 
 
 # Function that creates the tobogan
 def createTobogan(LINES):
     # Defining locations and texture coordinates for each vertex of the shape
+
+    #vertices = LINES.reshape(1,np.size(LINES)).tolist()[0]
+
+
+    # indices = []
+    # VerCirc = len(LINES[0])               # Cantidad de vertices circulo
+    # counter = 0                           # keeps 
+    # for i in range(len(LINES)-1):         # i iterates changing circles
+    #     Circle = LINES[i]
+    #     Circle2 = LINES[i+1]
+    #     for j in range(VerCirc):
+    #         indices += [j + counter, j + VerCirc + counter, j + 1 + counter]
+    #         indices += [j + VerCirc + counter, j + 1 + counter, VerCirc + j + 1 + counter]
+
+    #     counter += VerCirc 
+
     indices = []
     vertices = []
     VerCirc = len(LINES[0])               # Cantidad de vertices circulo
@@ -477,14 +496,14 @@ def createTobogan(LINES):
     for i in range(len(LINES)-1):         # i iterates changing circles
         Circle = LINES[i]
         Circle2 = LINES[i+1]
-        for j in range(VerCirc-1):
+        for j in range(VerCirc):
             vertices += [Circle[j][0], Circle[j][1], Circle[j][2]]
             if i == len(LINES)-1:
                 vertices += [Circle2[j][0], Circle2[j][1], Circle2[j][2]]
             indices += [j + counter, j + VerCirc + counter, j + 1 + counter]
             indices += [j + VerCirc + counter, j + 1 + counter, j + VerCirc + 1 + counter]
+
         counter += VerCirc
-    
     return bs.Shape(vertices, indices)
 
 Tobogan = createTobogan(LINES)
@@ -596,25 +615,24 @@ if __name__ == "__main__":
             translatedboat.transform = tr.translate(vertex[controller.ITR][0], vertex[controller.ITR][1], vertex[controller.ITR][2])
             controller.ITR +=1
         if controller.ITR > (len(vertex)-1)/10:
-            controller.ITR2 = controller.ITR -40
+            controller.ITR2 = controller.ITR -100
 
         # First case of Camera
         if not controller.Camera2:
 
             projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
-            viewPos = np.array([-10,-10,0])
-
+            viewPos = [50,0,0]     #If ypu want to see better 
             view = tr.lookAt(
                 viewPos,
-                np.array([0,0,5]),
+                np.array([translatedboat.transform[0][3], translatedboat.transform[1][3], translatedboat.transform[2][3]]),
                 np.array([0,0,1])
             )
+
         
         # Second case of Camera
         if controller.Camera2:
             projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
-            viewPos = np.array([vertex[controller.ITR2][0], vertex[controller.ITR2][1], vertex[controller.ITR2][2]+3])
-
+            viewPos = np.array([vertex[controller.ITR2][0], vertex[controller.ITR2][1], vertex[controller.ITR2][2]+1])
             view = tr.lookAt(
                 viewPos,
                 np.array([translatedboat.transform[0][3], translatedboat.transform[1][3], translatedboat.transform[2][3]]),
@@ -632,17 +650,17 @@ if __name__ == "__main__":
 
         # The axis is drawn without lighting effects
         if controller.showAxis:
-            glUseProgram(curvePipeline.shaderProgram)
-            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
-            colorPipeline.drawCall(gpuCurve, GL_LINE_STRIP)
+            # glUseProgram(curvePipeline.shaderProgram)
+            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
+            # colorPipeline.drawCall(gpuCurve, GL_LINE_STRIP)
 
             glUseProgram(curvePipeline.shaderProgram)
             glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
             glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
             glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
-            colorPipeline.drawCall(gpuTobogan,GL_LINES)
+            colorPipeline.drawCall(gpuTobogan)
 
             # glUseProgram(colorPipeline.shaderProgram)
             # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
