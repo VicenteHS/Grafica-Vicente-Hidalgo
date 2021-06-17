@@ -396,54 +396,29 @@ def createLine(N,Lista):
     CRcurve8 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[7], N)   #C8
     CRcurve9 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[8], N)   #C9
     CRcurve10 = cv.evalCurve(cv.CatmullRomMatrixL(Lista)[9], N)  #C10
-    ver = [CRcurve, CRcurve2, CRcurve3, CRcurve4, CRcurve5, 
-            CRcurve6, CRcurve7, CRcurve8, CRcurve9, CRcurve10]
+    #ver =np.array([CRcurve, CRcurve2, CRcurve3, CRcurve4, CRcurve5, 
+    #        CRcurve6, CRcurve7, CRcurve8, CRcurve9, CRcurve10])
+    ver = np.concatenate((CRcurve[0:-1,:],
+                          CRcurve2[0:-1,:],
+                          CRcurve3[0:-1,:],
+                          CRcurve4[0:-1,:],
+                          CRcurve5[0:-1,:],
+                          CRcurve6[0:-1,:],
+                          CRcurve7[0:-1,:],
+                          CRcurve8[0:-1,:],
+                          CRcurve9[0:-1,:],
+                          CRcurve10), axis=0) #numpy array
+    
 
-    vertices = []
-    indices = []
-    for i in range(10*N-9):
-        indices.append(i)
+    vertices = ver.reshape(1,np.size(ver)).tolist()[0] #list
+    indices = [i for i in range(10*N-9)]
 
-    for i in range(len(CRcurve)):
-        for j in range(len(CRcurve[0])):
-            vertices.append(CRcurve[i][j])
-    for i in range(len(CRcurve)):
-        for j in range(len(CRcurve[0])):
-            vertices.append(CRcurve2[i][j])
-    for i in range(len(CRcurve)):
-        for j in range(len(CRcurve[0])):
-            vertices.append(CRcurve3[i][j])
-    for i in range(len(CRcurve)):
-        for j in range(len(CRcurve[0])):
-            vertices.append(CRcurve4[i][j])
-    for i in range(len(CRcurve)):
-        for j in range(len(CRcurve[0])):
-            vertices.append(CRcurve5[i][j])
-    for i in range(len(CRcurve)):
-        for j in range(len(CRcurve[0])):
-            vertices.append(CRcurve6[i][j])
-    for i in range(len(CRcurve)):
-        for j in range(len(CRcurve[0])):
-            vertices.append(CRcurve7[i][j])
-    for i in range(len(CRcurve)):
-        for j in range(len(CRcurve[0])):
-            vertices.append(CRcurve8[i][j])
-    for i in range(len(CRcurve)):
-        for j in range(len(CRcurve[0])):
-            vertices.append(CRcurve9[i][j])
-    for i in range(len(CRcurve)):
-        for j in range(len(CRcurve[0])):
-            vertices.append(CRcurve10[i][j])
 
     return bs.Shape(vertices, indices), ver
 
 curve = createLine(100,Lista)[0]
-vertex = []
 #List of List of List, but vertex has 1 less, it has the posicions.
-ver = createLine(1000,Lista)[1]                                           #HERE you can change the velocity of the boat
-for i in range(len(ver)):
-        for j in range(len(ver[0])):
-            vertex.append(ver[i][j])
+vertex = createLine(100,Lista)[1]                                           #HERE you can change the velocity of the boat
 # So vertex has the positions of our curve
 
 
@@ -466,31 +441,29 @@ def perpendicular_vector(v):
 
 # This function generates all the points for the tobogan
 def createLines(vertex):
-    i = 0
-    R = 10                                                # Radio of the tobogan
+    R = 10                                               # Radio of the tobogan
     CircleNodes = 8                                      # Number of vertices of the tobogan
-    dphi = 2*np.pi /8
-    phi = 0
-    puntos = []
-    while i < len(vertex)-1:
-        NormalVector = vertex[i+1] - vertex[i] / np.linalg.norm(vertex[i+1] - vertex[i])
+    phi = np.linspace(0,2*np.pi,CircleNodes)[0:-1]
+
+    Puntos = np.zeros((np.size(vertex,0)-1,len(phi),3))
+
+    for i in range(np.size(vertex,0)-1): #circles
+        NormalVector = vertex[i+1,:] - vertex[i,:] / np.linalg.norm(vertex[i+1,:] - vertex[i,:])
+
+        #Perpendicular Plane
         PerpendicularVector = perpendicular_vector(NormalVector) / np.linalg.norm(perpendicular_vector(NormalVector))
         PerpendicularVector2 = np.cross(NormalVector,PerpendicularVector) / np.linalg.norm(np.cross(NormalVector,PerpendicularVector))
-        puntosCirculos = []
-        while phi <= 2*np.pi - dphi:
-            Punto = R*np.cos(phi) * PerpendicularVector + R*np.sin(phi) * PerpendicularVector2[1]
-            puntosCirculos.append(Punto + vertex[i])      # OJO CAMBIO PARA MOVER LOS VERTICES
-            phi += dphi
-        puntos.append(puntosCirculos) 
-        phi = 0
-        i += (int(len(vertex)/50))                        #HERE you can change the number of circles in the tobogan.
 
-    return puntos
+        for j in range(len(phi)): #angles
+            Puntos[i,j,:] = (R*np.cos(phi[j]) * PerpendicularVector + R*np.sin(phi[j]) * PerpendicularVector2) + vertex[i,:]
+
+    return Puntos
 # puntos works as a list, each element of it is a list with a group of np.arrays.
 #each one of this in lists represents one circle
 
 
 LINES = createLines(vertex)
+print(LINES)
 
 
 
@@ -511,7 +484,6 @@ def createTobogan(LINES):
             indices += [j + counter, j + VerCirc + counter, j + 1 + counter]
             indices += [j + VerCirc + counter, j + 1 + counter, j + VerCirc + 1 + counter]
         counter += VerCirc
-    print(vertices)
     
     return bs.Shape(vertices, indices)
 
@@ -670,13 +642,13 @@ if __name__ == "__main__":
             glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
             glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
             glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
-            colorPipeline.drawCall(gpuTobogan)
+            colorPipeline.drawCall(gpuTobogan,GL_LINES)
 
-            glUseProgram(colorPipeline.shaderProgram)
-            glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-            glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-            glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
-            colorPipeline.drawCall(gpuAxis, GL_LINES)
+            # glUseProgram(colorPipeline.shaderProgram)
+            # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+            # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+            # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
+            # colorPipeline.drawCall(gpuAxis, GL_LINES)
         
         
         # Selecting the lighting shader program
