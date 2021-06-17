@@ -445,7 +445,7 @@ def perpendicular_vector(v):
 # This function generates all the points for the tobogan
 def createLines(vertex):
     R = 5                                               # Radio of the tobogan
-    CircleNodes = 16                                      # Number of vertices of the tobogan
+    CircleNodes = 16                                    # Number of vertices of the tobogan
     phi = np.linspace(0,2*np.pi,CircleNodes)[0:]        # CKECK CHANGE
 
     Puntos = np.zeros((np.size(vertex,0)-1,len(phi),3))
@@ -566,6 +566,10 @@ if __name__ == "__main__":
     gpuTobogan = createGPUShape(lightingPipeline, Tobogan)
     gpuTobogan.texture = es.textureSimpleSetup(
         getAssetPath("madera.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+    gpuFinal = createGPUShape(lightingPipeline, createBoat())
+    gpuFinal.texture = es.textureSimpleSetup(
+        getAssetPath("final.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+
 
     # Creating Scenegraph of a CompleteBoat
     CompleteBoat = CompleteBoat()
@@ -709,6 +713,11 @@ if __name__ == "__main__":
         # Drawing
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
         lightingPipeline.drawCall(gpuTobogan)
+
+        # Drawing
+        
+        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([tr.translate(80, 80, 0), tr.uniformScale(10)]))
+        lightingPipeline.drawCall(gpuFinal)
 
 
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
