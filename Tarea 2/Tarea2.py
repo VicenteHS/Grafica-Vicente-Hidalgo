@@ -133,11 +133,6 @@ def on_key(window, key, scancode, action, mods):
     elif key == glfw.KEY_UP:
         controller.move = True
     
-    elif key == glfw.KEY_LEFT:
-        controller.theta -= np.pi * 0.05
-
-    elif key == glfw.KEY_RIGHT:
-        controller.theta += np.pi * 0.05
 
 
 ################################################################
@@ -321,7 +316,7 @@ def CompleteBoat():
 
     # TranslatedDefBoat
     TranslatedDefBoat = sg.SceneGraphNode("TranslatedDefBoat")
-    TranslatedDefBoat.transform = tr.translate(0,0,0)
+    TranslatedDefBoat.transform = tr.translate(5,5,10)
     TranslatedDefBoat.childs += [DefBoat]
 
     return TranslatedDefBoat
@@ -385,7 +380,7 @@ def createLine(N,Lista):
 
 curve = createLine(100,Lista)[0]                                            
 #List of List of List, but vertex has 1 less, it has the posicions.
-vertex = createLine(100,Lista)[1]                            #HERE you can change the velocity of the boat
+vertex = createLine(200,Lista)[1]                            #HERE you can change the velocity of the boat
 vertex2 = createLine(30,Lista)[1]                            #HERE you can change the number of points of the tobogan, 30 is good                                     
 # So vertex has the positions of our curve
 
@@ -433,7 +428,7 @@ TangentPlanesVertex = TangentPlanesVertex(vertex)
 # This function generates all the points for the tobogan
 def createLines(vertex):
     R = 5                                               # Radio of the tobogan
-    CircleNodes = 16                                    # Number of vertices of the tobogan
+    CircleNodes = 32                                    # Number of vertices of the tobogan
     phi = np.linspace(0,2*np.pi,CircleNodes)[0:]        # CKECK CHANGE
 
     Puntos = np.zeros((np.size(vertex,0)-1,len(phi),3))
@@ -578,6 +573,12 @@ if __name__ == "__main__":
         # Using GLFW to check for input events
         glfw.poll_events()
 
+        if (glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS):
+            controller.theta -= 2*np.pi * 0.005/2
+        if (glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS):
+            controller.theta += 2*np.pi * 0.005/2
+        
+
         # Getting the time difference from the previous iteration
         t1 = glfw.get_time()
         dt = t1 - t0
@@ -592,11 +593,17 @@ if __name__ == "__main__":
         translatedboat = sg.findNode(CompleteBoat, "TranslatedDefBoat")
 
 
-        if controller.ITR <= len(vertex)-1:
-            translatedboat.transform = tr.translate(vertex[controller.ITR][0], vertex[controller.ITR][1], vertex[controller.ITR][2])
-            controller.ITR +=1
-        if controller.ITR > (len(vertex)-1)/10:
-            controller.ITR2 = controller.ITR -100   #HERE you can change the delay of the camera
+        #Position of the boat
+        if controller.move:
+            if controller.ITR <= len(vertex)-2:
+                R = 5
+                curvePos = vertex[controller.ITR][0], vertex[controller.ITR][1], vertex[controller.ITR][2]
+                Plane = TangentPlanesVertex[controller.ITR]
+                traslacion = (R*np.cos(controller.theta) * Plane[0] + R*np.sin(controller.theta) * Plane[1]) + vertex[controller.ITR,:]
+                translatedboat.transform = tr.translate(traslacion[0], traslacion[1], traslacion[2])
+                controller.ITR +=1
+            if controller.ITR > (len(vertex)-1)/10:
+                controller.ITR2 = controller.ITR -100   #HERE you can change the delay of the camera
 
         # First case of Camera
         if not controller.Camera2:
