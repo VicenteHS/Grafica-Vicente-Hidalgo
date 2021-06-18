@@ -28,14 +28,13 @@ LIGHT_PHONG   = 2
 class Controller:
     def __init__(self):
         self.fillPolygon = True
-        self.showAxis = True
+        self.showAxis = False             #Control for activate red line
         self.lightingModel = LIGHT_PHONG
-        self.Camera2 = False
-        self.leftClickOn = False
-        self.rightClickOn = False
-        self.mousePos = (0.0, 0.0)
+        self.Camera2 = True
         self.ITR = 0
         self.ITR2 = 0
+        self.theta = 0
+        self.move = False
 
 
 
@@ -125,55 +124,20 @@ def on_key(window, key, scancode, action, mods):
     elif key == glfw.KEY_LEFT_CONTROL:
         controller.showAxis = not controller.showAxis
 
-    elif key == glfw.KEY_Q:
-        controller.lightingModel = LIGHT_FLAT
-
-    elif key == glfw.KEY_W:
-        controller.lightingModel = LIGHT_GOURAUD
-
-    elif key == glfw.KEY_E:
-        controller.lightingModel = LIGHT_PHONG
-
     elif key == glfw.KEY_ESCAPE:
         glfw.set_window_should_close(window, True)
 
     elif key == glfw.KEY_C:
         controller.Camera2 = not controller.Camera2
 
-################################################################
-################################################################
-################################################################
-# Mouse definition
-
-# Aca se define la posicion del mouse
-def cursor_pos_callback(window, x, y):
-    global controller
-    controller.mousePos = (x,y)
-
-# Aca se definen los botones del mouse
-def mouse_button_callback(window, button, action, mods):
-
-    global controller
+    elif key == glfw.KEY_UP:
+        controller.move = True
     
-    """
-    glfw.MOUSE_BUTTON_1: left click
-    glfw.MOUSE_BUTTON_2: right click
-    """
+    elif key == glfw.KEY_LEFT:
+        controller.theta -= np.pi * 0.05
 
-    if (action == glfw.PRESS or action == glfw.REPEAT):
-        if (button == glfw.MOUSE_BUTTON_1):
-            controller.leftClickOn = True
-
-
-        if (button == glfw.MOUSE_BUTTON_2):
-            controller.rightClickOn = True
-
-    elif (action ==glfw.RELEASE):
-        if (button == glfw.MOUSE_BUTTON_1):
-            controller.leftClickOn = False
-
-        if (button == glfw.MOUSE_BUTTON_2):
-            controller.rightClickOn = False
+    elif key == glfw.KEY_RIGHT:
+        controller.theta += np.pi * 0.05
 
 
 ################################################################
@@ -422,9 +386,9 @@ def createLine(N,Lista):
 curve = createLine(100,Lista)[0]                                            
 #List of List of List, but vertex has 1 less, it has the posicions.
 vertex = createLine(100,Lista)[1]                            #HERE you can change the velocity of the boat
-vertex2 = createLine(30,Lista)[1]                            #HERE you can change the number of points of the tobogan, 30 is good
-                                                             
+vertex2 = createLine(30,Lista)[1]                            #HERE you can change the number of points of the tobogan, 30 is good                                     
 # So vertex has the positions of our curve
+
 
 
 # This function generates a normal vector 
@@ -442,6 +406,28 @@ def perpendicular_vector(v):
     
     # Solvin the equation of a dot product, using arbitrarily some parameters as 1.
     return np.array([1,1,-1.0*(v[0]+v[1])/v[2]])
+
+
+
+#This function defines the tangent planes of vertex
+def TangentPlanesVertex(vertex):
+
+    aux = []
+    TangentPlanes = []
+    for i in range(np.size(vertex,0)-1):
+        NormalVector = vertex[i+1,:] - vertex[i,:] / np.linalg.norm(vertex[i+1,:] - vertex[i,:])
+
+        #Perpendicular Plane
+        PerpendicularVector = perpendicular_vector(NormalVector) / np.linalg.norm(perpendicular_vector(NormalVector))
+        PerpendicularVector2 = np.cross(NormalVector,PerpendicularVector) / np.linalg.norm(np.cross(NormalVector,PerpendicularVector))
+        aux.append(PerpendicularVector) 
+        aux.append(PerpendicularVector2) 
+        TangentPlanes.append(aux)
+    TangentPlanes = np.array(TangentPlanes)
+    return TangentPlanes
+
+TangentPlanesVertex = TangentPlanesVertex(vertex)
+
 
 
 # This function generates all the points for the tobogan
@@ -528,9 +514,6 @@ if __name__ == "__main__":
 
     # Connecting the callback function 'on_key' to handle keyboard events
     glfw.set_key_callback(window, on_key)
-    # Mouse a glfw.
-    glfw.set_cursor_pos_callback(window, cursor_pos_callback)
-    glfw.set_mouse_button_callback(window, mouse_button_callback)
 
     ###########################################################################
     ###########################################################################
@@ -595,10 +578,6 @@ if __name__ == "__main__":
         # Using GLFW to check for input events
         glfw.poll_events()
 
-        # Getting the mouse location in opengl coordinates
-        mousePosX = 2 * (controller.mousePos[0] - width/2) / width
-        mousePosY = 2 * (height/2 - controller.mousePos[1]) / height
-
         # Getting the time difference from the previous iteration
         t1 = glfw.get_time()
         dt = t1 - t0
@@ -617,13 +596,13 @@ if __name__ == "__main__":
             translatedboat.transform = tr.translate(vertex[controller.ITR][0], vertex[controller.ITR][1], vertex[controller.ITR][2])
             controller.ITR +=1
         if controller.ITR > (len(vertex)-1)/10:
-            controller.ITR2 = controller.ITR -100
+            controller.ITR2 = controller.ITR -100   #HERE you can change the delay of the camera
 
         # First case of Camera
         if not controller.Camera2:
 
             projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
-            viewPos = [50,0,0]     #If ypu want to see better 
+            viewPos = [50,0,0]     #If you want to see better 
             view = tr.lookAt(
                 viewPos,
                 np.array([translatedboat.transform[0][3], translatedboat.transform[1][3], translatedboat.transform[2][3]]),
