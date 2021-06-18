@@ -131,7 +131,7 @@ def on_key(window, key, scancode, action, mods):
         controller.Camera2 = not controller.Camera2
 
     elif key == glfw.KEY_UP:
-        controller.move = True
+        controller.move = not controller.move
     
 
 
@@ -604,6 +604,12 @@ if __name__ == "__main__":
                 controller.ITR +=1
             if controller.ITR > (len(vertex)-1)/10:
                 controller.ITR2 = controller.ITR -100   #HERE you can change the delay of the camera
+        
+        if not controller.move:
+            controller.ITR = 0
+            controller.ITR2 = 0
+            controller.theta = 0
+            translatedboat.transform = tr.translate(5, 5, 10)
 
         # First case of Camera
         if not controller.Camera2:
