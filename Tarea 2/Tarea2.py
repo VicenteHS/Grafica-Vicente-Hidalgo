@@ -131,7 +131,7 @@ def on_key(window, key, scancode, action, mods):
         controller.Camera2 = not controller.Camera2
 
     elif key == glfw.KEY_UP:
-        controller.move = not controller.move
+        controller.move = True
     
 
 
