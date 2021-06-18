@@ -107,6 +107,8 @@ class CurveShader:
         glBindVertexArray(0)
 
 
+
+
 # We will use the global controller as communication with the callback function
 controller = Controller()
 

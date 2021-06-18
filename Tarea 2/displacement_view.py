@@ -119,7 +119,7 @@ class DoubleTextureTransformShaderProgram:
 
         # Unbind the current VAO
         glBindVertexArray(0)
-        
+
 
 # A class to store the application control
 class Controller:
@@ -147,9 +147,6 @@ def on_key(window, key, scancode, action, mods):
     else:
         print('Unknown key')
 
-def cursor_pos_callback(window, x, y):
-    global controller
-    controller.mousePos = (x,y)
 
 if __name__ == "__main__":
 
@@ -160,7 +157,7 @@ if __name__ == "__main__":
     width = 600
     height = 600
 
-    window = glfw.create_window(width, height, "Double binding", None, None)
+    window = glfw.create_window(width, height, "Displacemente view", None, None)
 
     if not window:
         glfw.terminate()
@@ -171,12 +168,10 @@ if __name__ == "__main__":
     # Connecting the callback function 'on_key' to handle keyboard events
     glfw.set_key_callback(window, on_key)
 
-    glfw.set_cursor_pos_callback(window, cursor_pos_callback)
 
     # A simple shader program with position and texture coordinates as inputs.
     pipeline = DoubleTextureTransformShaderProgram()
-    
-    # Telling OpenGL to use our shader program
+
 
     # Setting up the clear screen color
     glClearColor(0.25, 0.25, 0.25, 1.0)
