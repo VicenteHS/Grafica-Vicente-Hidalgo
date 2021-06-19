@@ -31,6 +31,7 @@ class Controller:
         self.showAxis = False             #Control for activate red line
         self.lightingModel = LIGHT_PHONG
         self.Camera2 = True
+        self.CameraEnd = False
         self.ITR = 0
         self.ITR2 = 0
         self.theta = 0
@@ -132,6 +133,9 @@ def on_key(window, key, scancode, action, mods):
 
     elif key == glfw.KEY_UP:
         controller.move = True
+    
+    elif key == glfw.KEY_R:         #R for reestart
+        controller.move = False
     
 
 
@@ -322,6 +326,56 @@ def CompleteBoat():
     return TranslatedDefBoat
 
 
+def createEnd():
+    # Creating the end by a shape that is a cube with normals and textures
+    # Defining locations,texture coordinates and normals for each vertex of the shape  
+    vertices = [
+    #   positions            tex coords   normals
+    # Z+
+        -0.5, -0.5,  0.5,    0, 1,        0,0,1,
+         0.5, -0.5,  0.5,    1, 1,        0,0,1,
+         0.5,  0.5,  0.5,    1, 0,        0,0,1,
+        -0.5,  0.5,  0.5,    0, 0,        0,0,1,   
+    # Z-          
+        -0.5, -0.5, -0.5,    0, 1,        0,0,-1,
+         0.5, -0.5, -0.5,    1, 1,        0,0,-1,
+         0.5,  0.5, -0.5,    1, 0,        0,0,-1,
+        -0.5,  0.5, -0.5,    0, 0,        0,0,-1,
+       
+    # X+          
+         0.5, -0.5, -0.5,    0, 1,        1,0,0,
+         0.5,  0.5, -0.5,    1, 1,        1,0,0,
+         0.5,  0.5,  0.5,    1, 0,        1,0,0,
+         0.5, -0.5,  0.5,    0, 0,        1,0,0,   
+    # X-          
+        -0.5, -0.5, -0.5,    0, 1,        -1,0,0,
+        -0.5,  0.5, -0.5,    1, 1,        -1,0,0,
+        -0.5,  0.5,  0.5,    1, 0,        -1,0,0,
+        -0.5, -0.5,  0.5,    0, 0,        -1,0,0,   
+    # Y+          
+        -0.5,  0.5, -0.5,    0, 1,        0,1,0,
+         0.5,  0.5, -0.5,    1, 1,        0,1,0,
+         0.5,  0.5,  0.5,    1, 0,        0,1,0,
+        -0.5,  0.5,  0.5,    0, 0,        0,1,0,   
+    # Y-          
+        -0.5, -0.5, -0.5,    0, 1,        0,-1,0,
+         0.5, -0.5, -0.5,    1, 1,        0,-1,0,
+         0.5, -0.5,  0.5,    1, 0,        0,-1,0,
+        -0.5, -0.5,  0.5,    0, 0,        0,-1,0
+        ]   
+
+    # Defining connections among vertices
+    # We have a triangle every 3 indices specified
+    indices = [
+          0, 1, 2, 2, 3, 0, # Z+
+          7, 6, 5, 5, 4, 7, # Z-
+          8, 9,10,10,11, 8, # X+
+         15,14,13,13,12,15, # X-
+         19,18,17,17,16,19, # Y+
+         20,21,22,22,23,20] # Y-
+
+    
+    return bs.Shape(vertices, indices)
 
 
 
@@ -337,9 +391,9 @@ Lista = [np.array([[0, 0, 10]]).T,       #P0
         np.array([[30, 30, 6]]).T,           #P5
         np.array([[40, 48, 5]]).T,           #P6
         np.array([[55,52,4]]).T,           #P7
-        np.array([[60,53,3]]).T,            #P8
-        np.array([[65,53,2]]).T,             #P9
-        np.array([[70,60,1]]).T,            #P10
+        np.array([[60,55,3]]).T,            #P8
+        np.array([[65,68,2]]).T,             #P9
+        np.array([[75,70,1]]).T,            #P10
         np.array([[80,80,0]]).T,             #P11
         np.array([[90, 90, 0]]).T]         #P12
 
@@ -380,7 +434,7 @@ def createLine(N,Lista):
 
 curve = createLine(100,Lista)[0]                                            
 #List of List of List, but vertex has 1 less, it has the posicions.
-vertex = createLine(200,Lista)[1]                            #HERE you can change the velocity of the boat
+vertex = createLine(100,Lista)[1]                            #HERE you can change the velocity of the boat
 vertex2 = createLine(30,Lista)[1]                            #HERE you can change the number of points of the tobogan, 30 is good                                     
 # So vertex has the positions of our curve
 
@@ -428,7 +482,7 @@ TangentPlanesVertex = TangentPlanesVertex(vertex)
 # This function generates all the points for the tobogan
 def createLines(vertex):
     R = 5                                               # Radio of the tobogan
-    CircleNodes = 32                                    # Number of vertices of the tobogan
+    CircleNodes = 16                                    # Number of vertices of the tobogan
     phi = np.linspace(0,2*np.pi,CircleNodes)[0:]        # CKECK CHANGE
 
     Puntos = np.zeros((np.size(vertex,0)-1,len(phi),3))
@@ -518,6 +572,7 @@ if __name__ == "__main__":
     textureFlatPipeline = ls.SimpleTextureFlatShaderProgram()
     textureGouraudPipeline = ls.SimpleTextureGouraudShaderProgram()
     texturePhongPipeline = ls.SimpleTexturePhongShaderProgram()
+    textureMultiplePhongPipeline = ls.MultipleTexturePhongShaderProgram()
 
     # This shader program does not consider lighting
     colorPipeline = es.SimpleModelViewProjectionShaderProgram()
@@ -542,13 +597,14 @@ if __name__ == "__main__":
     # Creating shapes on GPU memory
     gpuAxis = createGPUShape(colorPipeline, bs.createAxis(4))
     gpuCurve = createGPUShape(curvePipeline, curve)
-    lightingPipeline = texturePhongPipeline
+    lightingPipeline = textureMultiplePhongPipeline
     gpuTobogan = createGPUShape(lightingPipeline, Tobogan)
     gpuTobogan.texture = es.textureSimpleSetup(
-        getAssetPath("madera.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
-    gpuFinal = createGPUShape(lightingPipeline, createBoat())
+        getAssetPath("Textura2.PNG"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+    gpuFinal = createGPUShape(lightingPipeline, createEnd())
     gpuFinal.texture = es.textureSimpleSetup(
         getAssetPath("final.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+    
 
 
     # Creating Scenegraph of a CompleteBoat
@@ -566,7 +622,6 @@ if __name__ == "__main__":
     ###########################################################################
     ###########################################################################
     ###########################################################################
-
 
     while not glfw.window_should_close(window):
 
@@ -601,37 +656,71 @@ if __name__ == "__main__":
                 Plane = TangentPlanesVertex[controller.ITR]
                 traslacion = (R*np.cos(controller.theta) * Plane[0] + R*np.sin(controller.theta) * Plane[1]) + vertex[controller.ITR,:]
                 translatedboat.transform = tr.translate(traslacion[0], traslacion[1], traslacion[2])
+                #translatedboat.transform = tr.translate(curvePos[0],curvePos[1],curvePos[2])
                 controller.ITR +=1
+            
+            elif controller.ITR > len(vertex)-2:
+                controller.CameraEnd = True
             if controller.ITR > (len(vertex)-1)/10:
                 controller.ITR2 = controller.ITR -100   #HERE you can change the delay of the camera
         
+        # Re-start or lose against the obstacle
         if not controller.move:
             controller.ITR = 0
             controller.ITR2 = 0
             controller.theta = 0
+            controller.CameraEnd = False
             translatedboat.transform = tr.translate(5, 5, 10)
-
-        # First case of Camera
-        if not controller.Camera2:
-
-            projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
-            viewPos = [50,0,0]     #If you want to see better 
-            view = tr.lookAt(
-                viewPos,
-                np.array([translatedboat.transform[0][3], translatedboat.transform[1][3], translatedboat.transform[2][3]]),
-                np.array([0,0,1])
-            )
-
         
-        # Second case of Camera
-        if controller.Camera2:
-            projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
-            viewPos = np.array([vertex[controller.ITR2][0], vertex[controller.ITR2][1], vertex[controller.ITR2][2]+1])
+
+        # Camera at the end
+        if controller.CameraEnd:
+            projection = tr.ortho(-1, 1, -1, 1, 1, 100)
+            viewPos = [-1,0,0]     #If you want to see better 
             view = tr.lookAt(
                 viewPos,
-                np.array([translatedboat.transform[0][3], translatedboat.transform[1][3], translatedboat.transform[2][3]]),
+                np.array([0,0,0]),
                 np.array([0,0,1])
             )
+            gpuFinal.texture = es.textureSimpleSetup(
+                getAssetPath("final.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+            
+
+        # Cameras while moving
+        else:
+
+            # First case of Camera
+            if not controller.Camera2:
+
+                projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
+                viewPos = [50,0,0]     #If you want to see better 
+                view = tr.lookAt(
+                    viewPos,
+                    np.array([translatedboat.transform[0][3], translatedboat.transform[1][3], translatedboat.transform[2][3]]),
+                    np.array([0,0,1])
+                )
+
+            
+            # Second case of Camera
+            if controller.Camera2:
+                #Initial case
+                if controller. ITR == 0:
+                    projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
+                    viewPos = np.array([3, 3, 12])
+                    view = tr.lookAt(
+                        viewPos,
+                        np.array([6,6,10]),
+                        np.array([0,0,1])
+                    )
+                #Oficial camera
+                else:
+                    projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
+                    viewPos = np.array([vertex[controller.ITR2][0], vertex[controller.ITR2][1], vertex[controller.ITR2][2]+1])
+                    view = tr.lookAt(
+                        viewPos,
+                        np.array([translatedboat.transform[0][3], translatedboat.transform[1][3], translatedboat.transform[2][3]]),
+                        np.array([0,0,1])
+                    )
 
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -644,11 +733,11 @@ if __name__ == "__main__":
 
         # The axis is drawn without lighting effects
         if controller.showAxis:
-            glUseProgram(curvePipeline.shaderProgram)
-            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
-            colorPipeline.drawCall(gpuCurve, GL_LINE_STRIP)
+            # glUseProgram(curvePipeline.shaderProgram)
+            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
+            # colorPipeline.drawCall(gpuCurve, GL_LINE_STRIP)
 
             # glUseProgram(curvePipeline.shaderProgram)
             # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
@@ -656,11 +745,11 @@ if __name__ == "__main__":
             # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
             # colorPipeline.drawCall(gpuTobogan)
 
-            # glUseProgram(colorPipeline.shaderProgram)
-            # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-            # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-            # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
-            # colorPipeline.drawCall(gpuAxis, GL_LINES)
+            glUseProgram(colorPipeline.shaderProgram)
+            glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+            glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+            glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.translate(80,80,0))
+            colorPipeline.drawCall(gpuAxis, GL_LINES)
         
         
         # Selecting the lighting shader program
@@ -669,7 +758,8 @@ if __name__ == "__main__":
         elif controller.lightingModel == LIGHT_GOURAUD:
             lightingPipeline = textureGouraudPipeline
         elif controller.lightingModel == LIGHT_PHONG:
-            lightingPipeline = texturePhongPipeline
+            #lightingPipeline = texturePhongPipeline
+            lightingPipeline = textureMultiplePhongPipeline
         else:
             raise Exception()
         
@@ -709,9 +799,17 @@ if __name__ == "__main__":
         lightingPipeline.drawCall(gpuTobogan)
 
         # Drawing
-        
-        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([tr.translate(80, 80, 0), tr.uniformScale(10)]))
-        lightingPipeline.drawCall(gpuFinal)
+        if not controller.CameraEnd:
+            glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                    tr.translate(83, 83, 0),
+                    tr.rotationZ(np.pi/3), 
+                    tr.uniformScale(15)]))
+            lightingPipeline.drawCall(gpuFinal)
+        if controller.CameraEnd:
+            glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                    tr.translate(0, 0, 0), 
+                    tr.uniformScale(2)]))
+            lightingPipeline.drawCall(gpuFinal)
 
 
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
