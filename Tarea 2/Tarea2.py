@@ -537,7 +537,59 @@ def createTobogan(LINES, vertex2):
     return bs.Shape(vertices, indices)
 
 Tobogan = createTobogan(LINES, vertex2)
-            
+
+
+
+# This function is used for creating the piece of water, reutiliza different functions mentioned before
+def createSectionWater(vertex):
+    # It uses crateLines, but it changes it to get less angles.
+    def createLines2(vertex):
+        R = 5                                               # Radio of the tobogan
+        CircleNodes = 4                                     # Number of vertices of the tobogan
+        phi = np.linspace(-1*np.pi/6,1*np.pi/6,CircleNodes)[0:]        # CKECK CHANGE
+
+        Puntos = np.zeros((np.size(vertex,0)-1,len(phi),3))
+
+        for i in range(np.size(vertex,0)-1): #circles
+            NormalVector = vertex[i+1,:] - vertex[i,:] / np.linalg.norm(vertex[i+1,:] - vertex[i,:])
+
+            #Perpendicular Plane
+            PerpendicularVector = perpendicular_vector(NormalVector) / np.linalg.norm(perpendicular_vector(NormalVector))
+            PerpendicularVector2 = np.cross(NormalVector,PerpendicularVector) / np.linalg.norm(np.cross(NormalVector,PerpendicularVector))
+
+            for j in range(len(phi)): #angles
+                Puntos[i,j,:] = (R*np.cos(phi[j]) * PerpendicularVector + R*np.sin(phi[j]) * PerpendicularVector2) + vertex[i,:]
+
+        return Puntos
+
+
+
+    LINES2 = createLines2(vertex)
+ 
+    indices = []
+    vertices = []
+    VerCirc = len(LINES2[0])               # Cantidad de vertices circulo
+    counter = 0                           # keeps 
+    for i in range(len(LINES2)-1):         # i iterates changing circles
+        Circle = LINES2[i]
+        Circle2 = LINES2[i+1]
+        for j in range(VerCirc):
+            vertices += [Circle[j][0], Circle[j][1], Circle[j][2], 
+                         j%2,i%2,
+                         (vertex2[i]- Circle[j])[0],(vertex2[i]- Circle[j])[1],(vertex2[i]- Circle[j])[2]]
+            if i == len(LINES2)-2:         # To have the end of the tobogan
+                vertices += [Circle2[j][0], Circle2[j][1], Circle2[j][2], 
+                         j%2,i%2,
+                         (vertex2[i]- Circle2[j])[0],(vertex2[i]- Circle2[j])[1],(vertex2[i]- Circle2[j])[2]]
+            if i <= len(LINES2)-4:         # This makes the end looks grate
+                indices += [j + counter, j + VerCirc + counter, j + 1 + counter]
+                indices += [j + VerCirc + counter, j + 1 + counter, j + VerCirc + 1 + counter]
+
+        counter += VerCirc
+    return bs.Shape(vertices, indices)
+
+WaterSection = createSectionWater(vertex2)
+
 
 
 
@@ -598,9 +650,17 @@ if __name__ == "__main__":
     gpuAxis = createGPUShape(colorPipeline, bs.createAxis(4))
     gpuCurve = createGPUShape(curvePipeline, curve)
     lightingPipeline = textureMultiplePhongPipeline
+    #Tobogan to gpu
     gpuTobogan = createGPUShape(lightingPipeline, Tobogan)
     gpuTobogan.texture = es.textureSimpleSetup(
         getAssetPath("Textura2.PNG"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+
+    #WaterSection to gpu
+    gpuWaterSection = createGPUShape(lightingPipeline, WaterSection)
+    gpuWaterSection.texture = es.textureSimpleSetup(
+        getAssetPath("madera.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+
+    #Endo to gpu
     gpuFinal = createGPUShape(lightingPipeline, createEnd())
     gpuFinal.texture = es.textureSimpleSetup(
         getAssetPath("final.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
@@ -797,6 +857,10 @@ if __name__ == "__main__":
         # Drawing
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
         lightingPipeline.drawCall(gpuTobogan)
+
+        # Drawing
+        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        lightingPipeline.drawCall(gpuWaterSection)
 
         # Drawing
         if not controller.CameraEnd:
