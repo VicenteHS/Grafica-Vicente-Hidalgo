@@ -723,8 +723,6 @@ if __name__ == "__main__":
         aux = (R*np.cos(angle[i]) * Plane_obstacle[i,0,:] + R*np.sin(angle[i]) * Plane_obstacle[i,1,:]) + Pos_obstacle[i,:]
         tras_obj[i,:] = aux
 
-
-
     #######################################################################################################################
     #######################################################################################################################
     #######################################################################################################################
@@ -781,7 +779,7 @@ if __name__ == "__main__":
             R = controller.R -0.8
             R2 = controller.R - 0.5
             r = 0.5
-            Plane = vertexP[controller.ITR]
+            Plane = vertexP[controller.ITR-1]
             traslacion = (R2*np.cos(controller.theta) * Plane[0,:] + R2*np.sin(controller.theta) * Plane[1,:]) + vertex[controller.ITR,:]
             if abs(tras_obj[i,0] - traslacion[0])<= r and abs(tras_obj[i,1] - traslacion[1])<= r and abs(tras_obj[i,2] - traslacion[2])<= r:
                 controller.move = False
