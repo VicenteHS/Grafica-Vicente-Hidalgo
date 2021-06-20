@@ -16,6 +16,7 @@ import grafica.lighting_shaders as ls
 from grafica.assets_path import getAssetPath
 import grafica.scene_graph as sg
 import grafica.ex_curves as cv
+import displacement_view as dv
 
 
 
@@ -265,7 +266,7 @@ def CompleteBoat():
     def createGPUShape(pipeline, shape):
         gpuShape = es.GPUShape().initBuffers()
         pipeline.setupVAO(gpuShape)
-        gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STATIC_DRAW)
+        gpuShape.fillBuffers(shape.vertices, shape.indices, GL_DYNAMIC_DRAW)
         return gpuShape
     
     # gpuBoat
@@ -545,7 +546,7 @@ def createSectionWater(vertex):
     # It uses crateLines, but it changes it to get less angles.
     def createLines2(vertex):
         R = 5                                               # Radio of the tobogan
-        CircleNodes = 4                                     # Number of vertices of the tobogan
+        CircleNodes = 3                                     # Number of vertices of the tobogan
         phi = np.linspace(-1*np.pi/6,1*np.pi/6,CircleNodes)[0:]        # CKECK CHANGE
 
         Puntos = np.zeros((np.size(vertex,0)-1,len(phi),3))
@@ -625,6 +626,7 @@ if __name__ == "__main__":
     textureGouraudPipeline = ls.SimpleTextureGouraudShaderProgram()
     texturePhongPipeline = ls.SimpleTexturePhongShaderProgram()
     textureMultiplePhongPipeline = ls.MultipleTexturePhongShaderProgram()
+    displacementeMultiplePipeline = dv.Displacement3D()
 
     # This shader program does not consider lighting
     colorPipeline = es.SimpleModelViewProjectionShaderProgram()
@@ -640,10 +642,10 @@ if __name__ == "__main__":
     glEnable(GL_DEPTH_TEST)
 
     # Convenience function to ease initialization
-    def createGPUShape(pipeline, shape):
+    def createGPUShape(pipeline, shape, draw = GL_STATIC_DRAW):
         gpuShape = es.GPUShape().initBuffers()
         pipeline.setupVAO(gpuShape)
-        gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STATIC_DRAW)
+        gpuShape.fillBuffers(shape.vertices, shape.indices, draw)
         return gpuShape
 
     # Creating shapes on GPU memory
@@ -651,14 +653,16 @@ if __name__ == "__main__":
     gpuCurve = createGPUShape(curvePipeline, curve)
     lightingPipeline = textureMultiplePhongPipeline
     #Tobogan to gpu
-    gpuTobogan = createGPUShape(lightingPipeline, Tobogan)
+    gpuTobogan = createGPUShape(lightingPipeline, Tobogan,GL_DYNAMIC_DRAW)
     gpuTobogan.texture = es.textureSimpleSetup(
-        getAssetPath("Textura2.PNG"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+        getAssetPath("madera.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
 
     #WaterSection to gpu
-    gpuWaterSection = createGPUShape(lightingPipeline, WaterSection)
+    gpuWaterSection = createGPUShape(displacementeMultiplePipeline, WaterSection)
     gpuWaterSection.texture = es.textureSimpleSetup(
-        getAssetPath("madera.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+        getAssetPath("Textura2.PNG"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+    gpuWaterSection.texture2 = es.textureSimpleSetup(
+        getAssetPath("Textura1.PNG"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
 
     #Endo to gpu
     gpuFinal = createGPUShape(lightingPipeline, createEnd())
@@ -696,6 +700,7 @@ if __name__ == "__main__":
 
         # Getting the time difference from the previous iteration
         t1 = glfw.get_time()
+        theta = 6*t1
         dt = t1 - t0
         t0 = t1
 
@@ -859,10 +864,6 @@ if __name__ == "__main__":
         lightingPipeline.drawCall(gpuTobogan)
 
         # Drawing
-        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
-        lightingPipeline.drawCall(gpuWaterSection)
-
-        # Drawing
         if not controller.CameraEnd:
             glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
                     tr.translate(83, 83, 0),
@@ -875,6 +876,42 @@ if __name__ == "__main__":
                     tr.uniformScale(2)]))
             lightingPipeline.drawCall(gpuFinal)
 
+        # Drawing
+        glUseProgram(displacementeMultiplePipeline.shaderProgram)
+        # White light in all components: ambient, diffuse and specular.
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
+
+        # Object is barely visible at only ambient. Bright white for diffuse and specular components.
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Kd"), 0.9, 0.9, 0.9)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
+
+        # TO DO: Explore different parameter combinations to understand their effect!
+        
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "lightPosition"), -5, -5, 5)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "viewPosition"), viewPos[0], viewPos[1], viewPos[2])
+        glUniform1ui(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "shininess"), 100)
+
+        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "constantAttenuation"), 0.0001)
+        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "linearAttenuation"), 0.03)
+        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "quadraticAttenuation"), 0.01)
+
+        glUniformMatrix4fv(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+        glUniformMatrix4fv(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+
+        # Binding samplers to both texture units
+        glUniform1i(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "WaterText"), 0)
+        glUniform1i(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "DisplaceText"), 1)
+
+        # Sending the mouse vertical location to our shader
+        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "time"), theta)
+        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "max"), 0.6)
+
+
+        displacementeMultiplePipeline.drawCall(gpuWaterSection)
 
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
         glfw.swap_buffers(window)
