@@ -38,6 +38,7 @@ class Controller:
         self.theta = 0
         self.move = False
         self.R = 5
+        self.velocity = 200
 
 
 
@@ -385,18 +386,18 @@ def createEnd():
 ################################################################
 ################################################################
 #Curves before tobogan
-Lista = [np.array([[0, 0, 10]]).T,       #P0
+Lista = [np.array([[0, 0, 10]]).T,         #P0
         np.array([[5, 5, 10]]).T,          #P1
         np.array([[10, 5, 9]]).T,          #P2
-        np.array([[15, 8, 8]]).T,         #P3
-        np.array([[20, 25, 7]]).T,          #P4
-        np.array([[30, 30, 6]]).T,           #P5
-        np.array([[40, 48, 5]]).T,           #P6
-        np.array([[55,52,4]]).T,           #P7
-        np.array([[60,55,3]]).T,            #P8
-        np.array([[65,68,2]]).T,             #P9
-        np.array([[75,70,1]]).T,            #P10
-        np.array([[80,80,0]]).T,             #P11
+        np.array([[15, 8, 8]]).T,          #P3
+        np.array([[20, 25, 7]]).T,         #P4
+        np.array([[30, 30, 6]]).T,         #P5
+        np.array([[40, 44, 5]]).T,         #P6
+        np.array([[50,52,4]]).T,           #P7
+        np.array([[60,55,3]]).T,           #P8
+        np.array([[65,68,2]]).T,           #P9
+        np.array([[75,73,1]]).T,           #P10
+        np.array([[80,80,0]]).T,           #P11
         np.array([[90, 90, 0]]).T]         #P12
 
 
@@ -436,7 +437,7 @@ def createLine(N,Lista):
 
 curve = createLine(100,Lista)[0]                                            
 #List of List of List, but vertex has 1 less, it has the posicions.
-vertex = createLine(100,Lista)[1]                            #HERE you can change the velocity of the boat
+vertex = createLine(controller.velocity,Lista)[1]                            #HERE you can change the velocity of the boat
 vertex2 = createLine(30,Lista)[1]                            #HERE you can change the number of points of the tobogan, 30 is good                                     
 # So vertex has the positions of our curve
 
@@ -544,9 +545,9 @@ Tobogan = createTobogan(LINES, vertex2)
 def createSectionWater(vertex):
     # It uses crateLines, but it changes it to get less angles.
     def createLines2(vertex):
-        R = controller.R -0.2                                               # Radio of the tobogan
-        CircleNodes = 5                                     # Number of vertices of the tobogan
-        phi = np.linspace(-1*np.pi/3,1*np.pi/3,CircleNodes)[0:-1]        # CKECK CHANGE
+        R = controller.R -0.2                               # Radio of the tobogan
+        CircleNodes = 10                                     # Number of vertices of the tobogan
+        phi = np.linspace(-1*np.pi/2,1*np.pi*4/7,CircleNodes)[0:-1]        # CKECK CHANGE
 
         Puntos = np.zeros((np.size(vertex,0)-1,len(phi),3))
 
@@ -561,7 +562,7 @@ def createSectionWater(vertex):
                 Puntos[i,j,:] = (R*np.cos(phi[j]) * PerpendicularVector + R*np.sin(phi[j]) * PerpendicularVector2) + vertex[i,:]
 
         return Puntos
-
+    
 
 
     LINES2 = createLines2(vertex)
@@ -703,10 +704,10 @@ if __name__ == "__main__":
         # Using GLFW to check for input events
         glfw.poll_events()
 
-        if (glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS):
-            controller.theta -= 2*np.pi * 0.005/2
-        if (glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS):
-            controller.theta += 2*np.pi * 0.005/2
+        if (glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS) and not controller.theta <= -1*np.pi/2:
+            controller.theta -= 2*np.pi * 0.003
+        if (glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS) and not controller.theta >= 1*np.pi*3/7:
+            controller.theta += 2*np.pi * 0.003
         
 
         # Getting the time difference from the previous iteration
@@ -738,7 +739,7 @@ if __name__ == "__main__":
             elif controller.ITR > len(vertex)-2:
                 controller.CameraEnd = True
             if controller.ITR > (len(vertex)-1)/10:
-                controller.ITR2 = controller.ITR -100   #HERE you can change the delay of the camera
+                controller.ITR2 = controller.ITR - controller.velocity   #HERE you can change the delay of the camera
         
         # Re-start or lose against the obstacle
         if not controller.move:
