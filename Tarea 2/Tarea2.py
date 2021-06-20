@@ -40,7 +40,7 @@ class Controller:
         self.move = False
         self.R = 5
         self.velocity = 100
-        self.Nobstacles = 10
+        self.Nobstacles = 3
 
 
 
@@ -575,7 +575,6 @@ def createSectionWater(vertex):
     indices = []
     vertices = []
     VerCirc = len(LINES2[0])               # Cantidad de vertices circulo
-    print(VerCirc)
     counter = 0                           # keeps 
     for i in range(len(LINES2)-1):         # i iterates changing circles
         Circle = LINES2[i]
@@ -715,9 +714,14 @@ if __name__ == "__main__":
 
     t0 = glfw.get_time()
 
-    
-  
 
+    # TRASLACION OF THE OBJETCS
+    tras_obj = np.zeros((controller.Nobstacles,3))
+    for i in range(controller.Nobstacles):
+
+        R = controller.R -0.8
+        aux = (R*np.cos(angle[i]) * Plane_obstacle[i,0,:] + R*np.sin(angle[i]) * Plane_obstacle[i,1,:]) + Pos_obstacle[i,:]
+        tras_obj[i,:] = aux
 
 
 
@@ -772,7 +776,6 @@ if __name__ == "__main__":
                 controller.ITR2 = controller.ITR - controller.velocity   #HERE you can change the delay of the camera
         
 
-        
         #Obstacle recognition
         for i in range(controller.Nobstacles):
             R = controller.R -0.8
@@ -780,8 +783,7 @@ if __name__ == "__main__":
             r = 0.5
             Plane = vertexP[controller.ITR]
             traslacion = (R2*np.cos(controller.theta) * Plane[0,:] + R2*np.sin(controller.theta) * Plane[1,:]) + vertex[controller.ITR,:]
-            tras_obj = (R*np.cos(angle[i]) * Plane_obstacle[i,0,:] + R*np.sin(angle[i]) * Plane_obstacle[i,1,:]) + Pos_obstacle[i,:]
-            if abs(tras_obj[0] - traslacion[0])<= r and abs(tras_obj[1] - traslacion[1])<= r and abs(tras_obj[2] - traslacion[2])<= r:
+            if abs(tras_obj[i,0] - traslacion[0])<= r and abs(tras_obj[i,1] - traslacion[1])<= r and abs(tras_obj[i,2] - traslacion[2])<= r:
                 controller.move = False
 
         # Re-start or lose against the obstacle
@@ -933,11 +935,8 @@ if __name__ == "__main__":
             gpuObstacle.texture = es.textureSimpleSetup(
                 getAssetPath("Textura1.PNG"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
 
-
-            tras_obj = (R*np.cos(angle[i]) * Plane_obstacle[i,0,:] + R*np.sin(angle[i]) * Plane_obstacle[i,1,:]) + Pos_obstacle[i,:]
-
             glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
-                tr.translate(tras_obj[0], tras_obj[1], tras_obj[2]),
+                tr.translate(tras_obj[i][0], tras_obj[i][1], tras_obj[i][2]),
                 tr.rotationZ(0), 
                 tr.uniformScale(0.5)]))
 
