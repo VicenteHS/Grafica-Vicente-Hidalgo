@@ -37,6 +37,7 @@ class Controller:
         self.ITR2 = 0
         self.theta = 0
         self.move = False
+        self.R = 5
 
 
 
@@ -462,18 +463,16 @@ def perpendicular_vector(v):
 #This function defines the tangent planes of vertex
 def TangentPlanesVertex(vertex):
 
-    aux = []
-    TangentPlanes = []
+    TangentPlanes = np.zeros((np.size(vertex,0)-1,2,3))
     for i in range(np.size(vertex,0)-1):
         NormalVector = vertex[i+1,:] - vertex[i,:] / np.linalg.norm(vertex[i+1,:] - vertex[i,:])
 
         #Perpendicular Plane
         PerpendicularVector = perpendicular_vector(NormalVector) / np.linalg.norm(perpendicular_vector(NormalVector))
         PerpendicularVector2 = np.cross(NormalVector,PerpendicularVector) / np.linalg.norm(np.cross(NormalVector,PerpendicularVector))
-        aux.append(PerpendicularVector) 
-        aux.append(PerpendicularVector2) 
-        TangentPlanes.append(aux)
-    TangentPlanes = np.array(TangentPlanes)
+        TangentPlanes[i,0,:] = PerpendicularVector
+        TangentPlanes[i,1,:] = PerpendicularVector2
+        
     return TangentPlanes
 
 TangentPlanesVertex = TangentPlanesVertex(vertex)
@@ -482,7 +481,7 @@ TangentPlanesVertex = TangentPlanesVertex(vertex)
 
 # This function generates all the points for the tobogan
 def createLines(vertex):
-    R = 5                                               # Radio of the tobogan
+    R = controller.R                                    # Radio of the tobogan
     CircleNodes = 16                                    # Number of vertices of the tobogan
     phi = np.linspace(0,2*np.pi,CircleNodes)[0:]        # CKECK CHANGE
 
@@ -545,9 +544,9 @@ Tobogan = createTobogan(LINES, vertex2)
 def createSectionWater(vertex):
     # It uses crateLines, but it changes it to get less angles.
     def createLines2(vertex):
-        R = 5                                               # Radio of the tobogan
-        CircleNodes = 3                                     # Number of vertices of the tobogan
-        phi = np.linspace(-1*np.pi/6,1*np.pi/6,CircleNodes)[0:]        # CKECK CHANGE
+        R = controller.R -0.2                                               # Radio of the tobogan
+        CircleNodes = 5                                     # Number of vertices of the tobogan
+        phi = np.linspace(-1*np.pi/3,1*np.pi/3,CircleNodes)[0:-1]        # CKECK CHANGE
 
         Puntos = np.zeros((np.size(vertex,0)-1,len(phi),3))
 
@@ -570,6 +569,7 @@ def createSectionWater(vertex):
     indices = []
     vertices = []
     VerCirc = len(LINES2[0])               # Cantidad de vertices circulo
+    print(VerCirc)
     counter = 0                           # keeps 
     for i in range(len(LINES2)-1):         # i iterates changing circles
         Circle = LINES2[i]
@@ -583,8 +583,17 @@ def createSectionWater(vertex):
                          j%2,i%2,
                          (vertex2[i]- Circle2[j])[0],(vertex2[i]- Circle2[j])[1],(vertex2[i]- Circle2[j])[2]]
             if i <= len(LINES2)-4:         # This makes the end looks grate
-                indices += [j + counter, j + VerCirc + counter, j + 1 + counter]
-                indices += [j + VerCirc + counter, j + 1 + counter, j + VerCirc + 1 + counter]
+                if j == 0:
+                    indices += [j + counter, j + VerCirc + counter, j + 1 + counter]
+                    indices += [j + VerCirc + counter, j + 1 + counter, j + VerCirc + 1 + counter]
+                else:
+                    if ((j+1)/VerCirc).is_integer(): # We remove the conection to get concave sup
+                        pass
+                    else:
+                        
+                        indices += [j + counter, j + VerCirc + counter, j + 1 + counter]
+                        indices += [j + VerCirc + counter, j + 1 + counter, j + VerCirc + 1 + counter]
+
 
         counter += VerCirc
     return bs.Shape(vertices, indices)
@@ -658,7 +667,9 @@ if __name__ == "__main__":
         getAssetPath("madera.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
 
     #WaterSection to gpu
-    gpuWaterSection = createGPUShape(displacementeMultiplePipeline, WaterSection)
+    gpuWaterSection = dv.TexGPUShape().initBuffers()
+    displacementeMultiplePipeline.setupVAO(gpuWaterSection)
+    gpuWaterSection.fillBuffers(WaterSection.vertices, WaterSection.indices, GL_DYNAMIC_DRAW)
     gpuWaterSection.texture = es.textureSimpleSetup(
         getAssetPath("Textura2.PNG"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
     gpuWaterSection.texture2 = es.textureSimpleSetup(
@@ -716,10 +727,10 @@ if __name__ == "__main__":
         #Position of the boat
         if controller.move:
             if controller.ITR <= len(vertex)-2:
-                R = 5
-                curvePos = vertex[controller.ITR][0], vertex[controller.ITR][1], vertex[controller.ITR][2]
+                R = controller.R - 0.5
+                #curvePos = vertex[controller.ITR][0], vertex[controller.ITR][1], vertex[controller.ITR][2]
                 Plane = TangentPlanesVertex[controller.ITR]
-                traslacion = (R*np.cos(controller.theta) * Plane[0] + R*np.sin(controller.theta) * Plane[1]) + vertex[controller.ITR,:]
+                traslacion = (R*np.cos(controller.theta) * Plane[0,:] + R*np.sin(controller.theta) * Plane[1,:]) + vertex[controller.ITR,:]
                 translatedboat.transform = tr.translate(traslacion[0], traslacion[1], traslacion[2])
                 #translatedboat.transform = tr.translate(curvePos[0],curvePos[1],curvePos[2])
                 controller.ITR +=1
@@ -798,35 +809,23 @@ if __name__ == "__main__":
 
         # The axis is drawn without lighting effects
         if controller.showAxis:
-            # glUseProgram(curvePipeline.shaderProgram)
-            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
-            # colorPipeline.drawCall(gpuCurve, GL_LINE_STRIP)
+            glUseProgram(curvePipeline.shaderProgram)
+            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+            glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
+            colorPipeline.drawCall(gpuCurve, GL_LINE_STRIP)
 
-            # glUseProgram(curvePipeline.shaderProgram)
-            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-            # glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
-            # colorPipeline.drawCall(gpuTobogan)
 
-            glUseProgram(colorPipeline.shaderProgram)
-            glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-            glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-            glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.translate(80,80,0))
-            colorPipeline.drawCall(gpuAxis, GL_LINES)
+            # glUseProgram(colorPipeline.shaderProgram)
+            # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+            # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+            # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.translate(80,80,0))
+            # colorPipeline.drawCall(gpuAxis, GL_LINES)
         
         
         # Selecting the lighting shader program
-        if controller.lightingModel == LIGHT_FLAT:
-            lightingPipeline = textureFlatPipeline
-        elif controller.lightingModel == LIGHT_GOURAUD:
-            lightingPipeline = textureGouraudPipeline
-        elif controller.lightingModel == LIGHT_PHONG:
-            #lightingPipeline = texturePhongPipeline
-            lightingPipeline = textureMultiplePhongPipeline
-        else:
-            raise Exception()
+        lightingPipeline = textureMultiplePhongPipeline
+
         
         glUseProgram(lightingPipeline.shaderProgram)
 
@@ -859,7 +858,7 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.translate(0.75,0,0))
         sg.drawSceneGraphNode(CompleteBoat, lightingPipeline, "model")
 
-        # Drawing
+        #Drawing
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
         lightingPipeline.drawCall(gpuTobogan)
 
@@ -888,7 +887,6 @@ if __name__ == "__main__":
         glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Kd"), 0.9, 0.9, 0.9)
         glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
 
-        # TO DO: Explore different parameter combinations to understand their effect!
         
         glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "lightPosition"), -5, -5, 5)
         glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "viewPosition"), viewPos[0], viewPos[1], viewPos[2])
@@ -908,7 +906,7 @@ if __name__ == "__main__":
 
         # Sending the mouse vertical location to our shader
         glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "time"), theta)
-        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "max"), 0.6)
+        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Vm"), 0.6)
 
 
         displacementeMultiplePipeline.drawCall(gpuWaterSection)

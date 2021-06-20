@@ -182,7 +182,7 @@ class Displacement3D:
             uniform sampler2D WaterText;
             uniform sampler2D DisplaceText;
             uniform float time;
-            uniform float maximo;
+            uniform float Vm;
 
             void main()
             {
@@ -192,7 +192,7 @@ class Displacement3D:
                 float T = time * 0.01;
                 vec2 TCoords = vec2(fragTexCoords.s + T, fragTexCoords.t + T);
                 vec4 Noise = texture(DisplaceText, TCoords);
-                float Displace = Noise.r * maximo;
+                float Displace = Noise.r * Vm;
                 vec2 DisplaceCoords = vec2(fragTexCoords.x + sin(Displace), fragTexCoords.y + cos(Displace));
 
 
@@ -267,35 +267,35 @@ class Displacement3D:
         glBindVertexArray(0)
 
     
-    def drawCall(self, gpuShape, mode=GL_TRIANGLES):
-        assert isinstance(gpuShape, GPUShape)
-
-        # Binding the VAO and executing the draw call
-        glBindVertexArray(gpuShape.vao)
-        glBindTexture(GL_TEXTURE_2D, gpuShape.texture)
-
-        glDrawElements(mode, gpuShape.size, GL_UNSIGNED_INT, None)
-
-        # Unbind the current VAO
-        glBindVertexArray(0)
-
-
     # def drawCall(self, gpuShape, mode=GL_TRIANGLES):
-    #     assert isinstance(gpuShape, TexGPUShape)
+    #     assert isinstance(gpuShape, GPUShape)
 
+    #     # Binding the VAO and executing the draw call
     #     glBindVertexArray(gpuShape.vao)
-    #     # Binding the first texture
-    #     glActiveTexture(GL_TEXTURE0 + 0)
     #     glBindTexture(GL_TEXTURE_2D, gpuShape.texture)
-    #     # Binding the second texture
-    #     glActiveTexture(GL_TEXTURE0 + 1)
-    #     glBindTexture(GL_TEXTURE_2D, gpuShape.texture2)
 
     #     glDrawElements(mode, gpuShape.size, GL_UNSIGNED_INT, None)
 
     #     # Unbind the current VAO
     #     glBindVertexArray(0)
 
+
+    def drawCall(self, gpuShape, mode=GL_TRIANGLES):
+        assert isinstance(gpuShape, TexGPUShape)
+
+        glBindVertexArray(gpuShape.vao)
+        # Binding the first texture
+        glActiveTexture(GL_TEXTURE0 + 0)
+        glBindTexture(GL_TEXTURE_2D, gpuShape.texture)
+        # Binding the second texture
+        glActiveTexture(GL_TEXTURE0 + 1)
+        glBindTexture(GL_TEXTURE_2D, gpuShape.texture2)
+
+        glDrawElements(mode, gpuShape.size, GL_UNSIGNED_INT, None)
+
+        # Unbind the current VAO
+        glBindVertexArray(0)
+        glActiveTexture(GL_TEXTURE0 + 0)
 
 
 
