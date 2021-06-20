@@ -931,7 +931,7 @@ if __name__ == "__main__":
             R = controller.R -0.8
             gpuObstacle = createGPUShape(lightingPipeline, createEnd())
             gpuObstacle.texture = es.textureSimpleSetup(
-                getAssetPath("Textura1.PNG"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+                getAssetPath("negro.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR, GL_LINEAR)
 
             glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
                 tr.translate(tras_obj[i][0], tras_obj[i][1], tras_obj[i][2]),
@@ -987,5 +987,8 @@ if __name__ == "__main__":
 
     # freeing GPU memory
     gpuAxis.clear()
+    gpuObstacle.celar()
+    gpuFinal.clear()
+    gpuTobogan.clear()
 
     glfw.terminate()
