@@ -17,6 +17,7 @@ from grafica.assets_path import getAssetPath
 import grafica.scene_graph as sg
 import grafica.ex_curves as cv
 import displacement_view as dv
+import random
 
 
 
@@ -38,7 +39,8 @@ class Controller:
         self.theta = 0
         self.move = False
         self.R = 5
-        self.velocity = 200
+        self.velocity = 100
+        self.Nobstacles = 3
 
 
 
@@ -476,7 +478,10 @@ def TangentPlanesVertex(vertex):
         
     return TangentPlanes
 
-TangentPlanesVertex = TangentPlanesVertex(vertex)
+
+
+vertexP = TangentPlanesVertex(vertex)
+
 
 
 
@@ -603,8 +608,28 @@ WaterSection = createSectionWater(vertex2)
 
 
 
+# This function gives the position of the obstacles
+def obstaclePos(vertex2, tangent,ANGLES):
+    Puntos = np.zeros((controller.Nobstacles,3))
+    Tg = np.zeros((controller.Nobstacles,2,3))
+    angle = np.zeros((controller.Nobstacles))
+    for i in range(controller.Nobstacles):
+        index = random.randint(0,len(vertex2)-3)
+        pos = vertex2[index]
+        Puntos[i,:] = pos
 
+        Tg[i,:,:] = tangent[index,:,:]
+        
+        alpha = random.choice(ANGLES)
+        angle[i] = alpha
+    
+    return Puntos, Tg, angle
 
+tangent = TangentPlanesVertex(vertex2)
+ANGLES = np.linspace(-1*np.pi/2, 1*np.pi*3/7,50)  #HERE you can change te angle for the obstacle
+Pos_obstacle, Plane_obstacle, angle = obstaclePos(vertex2, tangent, ANGLES)
+
+    
 
 
 if __name__ == "__main__":
@@ -680,6 +705,8 @@ if __name__ == "__main__":
     gpuFinal = createGPUShape(lightingPipeline, createEnd())
     gpuFinal.texture = es.textureSimpleSetup(
         getAssetPath("final.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+
+
     
 
 
@@ -688,22 +715,26 @@ if __name__ == "__main__":
 
     t0 = glfw.get_time()
 
+    
+  
 
 
 
-    ###########################################################################
-    ###########################################################################
-    ###########################################################################
+
+    #######################################################################################################################
+    #######################################################################################################################
+    #######################################################################################################################
     #Star while
-    ###########################################################################
-    ###########################################################################
-    ###########################################################################
+    #######################################################################################################################
+    #######################################################################################################################
+    #######################################################################################################################
 
     while not glfw.window_should_close(window):
 
         # Using GLFW to check for input events
         glfw.poll_events()
 
+        #ANGLE valors for the boat
         if (glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS) and not controller.theta <= -1*np.pi/2:
             controller.theta -= 2*np.pi * 0.003
         if (glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS) and not controller.theta >= 1*np.pi*3/7:
@@ -720,7 +751,6 @@ if __name__ == "__main__":
         rotatedflag = sg.findNode(CompleteBoat, "RotatedFlag")
         rotatedflag.transform = tr.rotationZ(t1)
 
-        #CKECK THIS !!!!!---------------------------------------------------------------------
         #Translate Boat
         translatedboat = sg.findNode(CompleteBoat, "TranslatedDefBoat")
 
@@ -730,7 +760,7 @@ if __name__ == "__main__":
             if controller.ITR <= len(vertex)-2:
                 R = controller.R - 0.5
                 #curvePos = vertex[controller.ITR][0], vertex[controller.ITR][1], vertex[controller.ITR][2]
-                Plane = TangentPlanesVertex[controller.ITR]
+                Plane = vertexP[controller.ITR]
                 traslacion = (R*np.cos(controller.theta) * Plane[0,:] + R*np.sin(controller.theta) * Plane[1,:]) + vertex[controller.ITR,:]
                 translatedboat.transform = tr.translate(traslacion[0], traslacion[1], traslacion[2])
                 #translatedboat.transform = tr.translate(curvePos[0],curvePos[1],curvePos[2])
@@ -815,19 +845,21 @@ if __name__ == "__main__":
             glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
             glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
             colorPipeline.drawCall(gpuCurve, GL_LINE_STRIP)
-
-
-            # glUseProgram(colorPipeline.shaderProgram)
-            # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-            # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-            # glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.translate(80,80,0))
-            # colorPipeline.drawCall(gpuAxis, GL_LINES)
-        
-        
+             
         # Selecting the lighting shader program
         lightingPipeline = textureMultiplePhongPipeline
 
+
+
+        ##############################################################################################################
+        ##############################################################################################################
+        ################### DRAWING ##################################################################################
+        ##############################################################################################################
+        ##############################################################################################################
         
+
+
+
         glUseProgram(lightingPipeline.shaderProgram)
 
         # Setting all uniform shader variables
@@ -856,7 +888,12 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
 
         # Drawing
-        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.translate(0.75,0,0))
+        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                tr.translate(0.75,0,0), 
+                #tr.rotationA(theta, axis),
+                tr.identity()
+                ]))
+
         sg.drawSceneGraphNode(CompleteBoat, lightingPipeline, "model")
 
         #Drawing
@@ -876,16 +913,39 @@ if __name__ == "__main__":
                     tr.uniformScale(2)]))
             lightingPipeline.drawCall(gpuFinal)
 
+        #Drawing Obstacles
+        for i in range(controller.Nobstacles):
+            R = controller.R -0.8
+            gpuObstacle = createGPUShape(lightingPipeline, createEnd())
+            gpuObstacle.texture = es.textureSimpleSetup(
+                getAssetPath("Textura1.PNG"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+
+
+            tras_obj = (R*np.cos(angle) * Plane_obstacle[i,0,:] + R*np.sin(angle) * Plane_obstacle[i,1,:]) + Pos_obstacle[i,:]
+
+            glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                tr.translate(tras_obj[0], tras_obj[1], tras_obj[2]),
+                tr.rotationZ(0), 
+                tr.uniformScale(0.5)]))
+
+            lightingPipeline.drawCall(gpuObstacle)
+
+
+
+
+
+
+
         # Drawing
         glUseProgram(displacementeMultiplePipeline.shaderProgram)
-        # White light in all components: ambient, diffuse and specular.
-        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
-        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
-        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
+        # White light to see better the tobogan
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "La"), 1.0 ,1.0 ,1.0)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ld"), 0.5, 0.5, 0.5)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ls"), 0.5, 0.5, 0.5)
 
         # Object is barely visible at only ambient. Bright white for diffuse and specular components.
         glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
-        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Kd"), 0.9, 0.9, 0.9)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Kd"), 0.7, 0.7, 0.7)
         glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
 
         
@@ -893,8 +953,8 @@ if __name__ == "__main__":
         glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "viewPosition"), viewPos[0], viewPos[1], viewPos[2])
         glUniform1ui(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "shininess"), 100)
 
-        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "constantAttenuation"), 0.0001)
-        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "linearAttenuation"), 0.03)
+        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "constantAttenuation"), 0.0002)
+        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "linearAttenuation"), 0.028)
         glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "quadraticAttenuation"), 0.01)
 
         glUniformMatrix4fv(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
