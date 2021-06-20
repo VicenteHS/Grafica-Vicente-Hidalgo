@@ -570,7 +570,7 @@ def createSectionWater(vertex):
     indices = []
     vertices = []
     VerCirc = len(LINES2[0])               # Cantidad de vertices circulo
-    counter = 0                            # keeps 
+    counter = 0                           # keeps 
     for i in range(len(LINES2)-1):         # i iterates changing circles
         Circle = LINES2[i]
         Circle2 = LINES2[i+1]
@@ -590,7 +590,6 @@ def createSectionWater(vertex):
     return bs.Shape(vertices, indices)
 
 WaterSection = createSectionWater(vertex2)
-
 
 
 
@@ -627,7 +626,7 @@ if __name__ == "__main__":
     textureGouraudPipeline = ls.SimpleTextureGouraudShaderProgram()
     texturePhongPipeline = ls.SimpleTexturePhongShaderProgram()
     textureMultiplePhongPipeline = ls.MultipleTexturePhongShaderProgram()
-    displacementeMultiplePipeline = dv.Displacement3D()               
+    displacementeMultiplePipeline = dv.Displacement3D()
 
     # This shader program does not consider lighting
     colorPipeline = es.SimpleModelViewProjectionShaderProgram()
@@ -816,11 +815,19 @@ if __name__ == "__main__":
             glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
             glUniformMatrix4fv(glGetUniformLocation(colorPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.translate(80,80,0))
             colorPipeline.drawCall(gpuAxis, GL_LINES)
-
-        #Using lightin
-        lightingPipeline = textureMultiplePhongPipeline
-
-
+        
+        
+        # Selecting the lighting shader program
+        if controller.lightingModel == LIGHT_FLAT:
+            lightingPipeline = textureFlatPipeline
+        elif controller.lightingModel == LIGHT_GOURAUD:
+            lightingPipeline = textureGouraudPipeline
+        elif controller.lightingModel == LIGHT_PHONG:
+            #lightingPipeline = texturePhongPipeline
+            lightingPipeline = textureMultiplePhongPipeline
+        else:
+            raise Exception()
+        
         glUseProgram(lightingPipeline.shaderProgram)
 
         # Setting all uniform shader variables
@@ -871,26 +878,25 @@ if __name__ == "__main__":
 
         # Drawing
         glUseProgram(displacementeMultiplePipeline.shaderProgram)
-
         # White light in all components: ambient, diffuse and specular.
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
 
         # Object is barely visible at only ambient. Bright white for diffuse and specular components.
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Kd"), 0.9, 0.9, 0.9)
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Kd"), 0.9, 0.9, 0.9)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
 
         # TO DO: Explore different parameter combinations to understand their effect!
         
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "lightPosition"), -5, -5, 5)
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "viewPosition"), viewPos[0], viewPos[1], viewPos[2])
-        glUniform1ui(glGetUniformLocation(lightingPipeline.shaderProgram, "shininess"), 100)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "lightPosition"), -5, -5, 5)
+        glUniform3f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "viewPosition"), viewPos[0], viewPos[1], viewPos[2])
+        glUniform1ui(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "shininess"), 100)
 
-        glUniform1f(glGetUniformLocation(lightingPipeline.shaderProgram, "constantAttenuation"), 0.0001)
-        glUniform1f(glGetUniformLocation(lightingPipeline.shaderProgram, "linearAttenuation"), 0.03)
-        glUniform1f(glGetUniformLocation(lightingPipeline.shaderProgram, "quadraticAttenuation"), 0.01)
+        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "constantAttenuation"), 0.0001)
+        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "linearAttenuation"), 0.03)
+        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "quadraticAttenuation"), 0.01)
 
         glUniformMatrix4fv(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
         glUniformMatrix4fv(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
@@ -902,7 +908,7 @@ if __name__ == "__main__":
 
         # Sending the mouse vertical location to our shader
         glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "time"), theta)
-        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "maximo"), 0.6)
+        glUniform1f(glGetUniformLocation(displacementeMultiplePipeline.shaderProgram, "max"), 0.6)
 
 
         displacementeMultiplePipeline.drawCall(gpuWaterSection)
