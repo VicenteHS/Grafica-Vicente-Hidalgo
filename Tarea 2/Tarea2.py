@@ -40,7 +40,7 @@ class Controller:
         self.move = False
         self.R = 5
         self.velocity = 100
-        self.Nobstacles = 3
+        self.Nobstacles = 20
 
 
 
