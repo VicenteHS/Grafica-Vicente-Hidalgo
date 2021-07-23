@@ -1,0 +1,13 @@
+# Blender MTL File: 'a.blend'
+# Material Count: 1
+
+newmtl 10523_Pool_Table_v1
+Ns 10.000002
+Ka 1.000000 1.000000 1.000000
+Kd 0.588200 0.588200 0.588200
+Ks 0.180000 0.180000 0.180000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd Pool_Table_v1_L3.123cfd05f9a2-55bf-44eb-a28f-ca2d77dc21a4\\Pool_Table_v1_L3.123cfd05f9a2-55bf-44eb-a28f-ca2d77dc21a4\\10523_Pool_Table_v1_Diffuse.jpg

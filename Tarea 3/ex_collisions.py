@@ -1,5 +1,4 @@
 # coding=utf-8
-"""Circles, collisions and gravity"""
 
 import glfw
 from OpenGL.GL import *
@@ -13,9 +12,11 @@ import grafica.basic_shapes as bs
 import grafica.easy_shaders as es
 import grafica.transformations as tr
 import grafica.performance_monitor as pm
+import ex_obj_reader as objr
+from grafica.assets_path import getAssetPath
+import grafica.lighting_shaders as ls
 
-__author__ = "Daniel Calderon"
-__license__ = "MIT"
+
 
 # Example parameters
 
@@ -178,7 +179,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Creating a glfw window
-    title = "Circles, collisions and gravity"
+    title = "Pool"
     window = glfw.create_window(WINDOW_WIDTH, WINDOW_HEIGHT, title, None, None)
 
     if not window:
@@ -192,6 +193,7 @@ if __name__ == "__main__":
 
     # Creating our shader program and telling OpenGL to use it
     pipeline = es.SimpleTransformShaderProgram()
+    phongTexturePipeline = ls.SimpleTexturePhongShaderProgram()
     glUseProgram(pipeline.shaderProgram)
 
     # Setting up the clear screen color
@@ -220,6 +222,13 @@ if __name__ == "__main__":
     gravityAcceleration = np.array([0.0, -1.0], dtype=np.float32)
     noGravityAcceleration = np.array([0.0, 0.0], dtype=np.float32)
 
+    table = objr.readOBJ(getAssetPath('table.obj'))
+    gpuTable = createGPUShape(pipeline, table)
+    gpuTable.texture = es.textureSimpleSetup(
+        getAssetPath("texturaRed.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+
+    t0 = glfw.get_time()
+    camera_theta = -3*np.pi/4
     # Application loop
     while not glfw.window_should_close(window):
 
@@ -229,6 +238,31 @@ if __name__ == "__main__":
 
         # Using GLFW to check for input events
         glfw.poll_events()
+
+        t1 = glfw.get_time()
+        dt = t1 - t0
+        t0 = t1
+
+        if (glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS):
+            camera_theta -= 2 * dt
+
+        if (glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS):
+            camera_theta += 2* dt
+
+        # Setting up the view transform
+        R = 12
+        camX = R * np.sin(camera_theta)
+        camY = R * np.cos(camera_theta)
+        viewPos = np.array([camX, camY, 7])
+        view = tr.lookAt(
+            viewPos,
+            np.array([0,0,1]),
+            np.array([0,0,1])
+        )
+
+        # Clearing the screen in both, color and depth
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
 
         # Using the time as the theta parameter
         theta = glfw.get_time()
@@ -264,14 +298,41 @@ if __name__ == "__main__":
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
         # drawing all the circles
-        for circle in circles:
-            circle.draw()
+        # Setting uniforms that will NOT change on each iteration
+        glUseProgram(phongTexturePipeline.shaderProgram)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
+
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Kd"), 0.9, 0.9, 0.9)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
+
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "lightPosition"), -3, 0, 3)
+        
+        glUniform1ui(glGetUniformLocation(phongTexturePipeline.shaderProgram, "shininess"), 100)
+        glUniform1f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "constantAttenuation"), 0.001)
+        glUniform1f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "linearAttenuation"), 0.1)
+        glUniform1f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "quadraticAttenuation"), 0.01)
+        #Setting up the projection transform
+        projection = tr.perspective(60, float(width)/float(height), 0.1, 100)
+        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+        phongTexturePipeline.drawCall(gpuTable)
+
+
+
+
+
+        #for circle in circles:
+        #    circle.draw()
 
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
         glfw.swap_buffers(window)
 
     # freeing GPU memory
-    for circle in circles:
-        circle.gpuShape.clear()
+    #for circle in circles:
+    #    circle.gpuShape.clear()
     
     glfw.terminate()
