@@ -73,11 +73,13 @@ if __name__ == "__main__":
 
     # Defining shader programs
     phongTexturePipeline = ls.SimpleTexturePhongShaderProgram()
+    gouraudTexturePipeline = ls.SimpleTextureGouraudShaderProgram()
+    lightingPipeline = ls.MultipleTexturePhongShaderProgram()
 
     
 
     # Setting up the clear screen color
-    glClearColor(0.85, 0.85, 0.85, 1.0)
+    glClearColor(0.5, 0.5, 0.5, 1.0)
 
     # As we work in 3D, we need to check which part is in front,
     # and which one is at the back
@@ -85,7 +87,7 @@ if __name__ == "__main__":
 
     # Creating shapes on GPU memory
     table = objr.readOBJ(getAssetPath('table.obj'))
-    gpuTable = createGPUShape(phongTexturePipeline, table)
+    gpuTable = createGPUShape(gouraudTexturePipeline, table)
     gpuTable.texture = es.textureSimpleSetup(
         getAssetPath("texturaRed.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
 
@@ -105,7 +107,6 @@ if __name__ == "__main__":
         # Measuring performance
         perfMonitor.update(glfw.get_time())
         glfw.set_window_title(window, title + str(perfMonitor))
-        print(controller.viewTop)
 
         # Using GLFW to check for input events
         glfw.poll_events()
@@ -128,8 +129,8 @@ if __name__ == "__main__":
 
             # Setting up the view transform
             R = 0.00001
-            camX = R * np.sin(0)
-            camY = R * np.cos(0)
+            camX = R * np.sin(np.pi)
+            camY = R * np.cos(np.pi)
             viewPos = np.array([camX, camY, 170])
             view = tr.lookAt(
                 viewPos,
@@ -138,16 +139,16 @@ if __name__ == "__main__":
             )
         if not controller.viewTop: 
             # Setting up the projection transform
-            projection = tr.perspective(60, float(width)/float(height), 0.1, 200)
+            projection = tr.perspective(60, float(width)/float(height), 0.1, 400)
 
             # Setting up the view transform
-            R = 0.00001
-            camX = R * np.sin(0)
-            camY = R * np.cos(0)
-            viewPos = np.array([camX, camY, 170])
+            R = 2
+            camX = R * np.sin(camera_theta)
+            camY = R * np.cos(camera_theta)
+            viewPos = np.array([0, 0, 71])
             view = tr.lookAt(
                 viewPos,
-                np.array([0,0,1]),
+                np.array([camX,camY,71.5]),
                 np.array([0,0,1])
             )
 
@@ -162,27 +163,28 @@ if __name__ == "__main__":
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
         # Drawing shapes
-        glUseProgram(phongTexturePipeline.shaderProgram)
-        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
-        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
-        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
+        lightingPipeline = gouraudTexturePipeline
+        glUseProgram(lightingPipeline.shaderProgram)
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ld"), 0.5, 0.5, 0.5)
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ls"), 0.5, 0.5, 0.5)
 
-        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
-        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Kd"), 0.9, 0.9, 0.9)
-        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Kd"), 0.9, 0.9, 0.9)
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
 
-        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "lightPosition"), 0, 0, 170)
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "lightPosition"), 0, 0, 80)
         
-        glUniform1ui(glGetUniformLocation(phongTexturePipeline.shaderProgram, "shininess"), 100)
-        glUniform1f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "constantAttenuation"), 0.001)
-        glUniform1f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "linearAttenuation"), 0.1)
-        glUniform1f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "quadraticAttenuation"), 0.01)
+        glUniform1ui(glGetUniformLocation(lightingPipeline.shaderProgram, "shininess"), 1000)
+        glUniform1f(glGetUniformLocation(lightingPipeline.shaderProgram, "constantAttenuation"), 0.001)
+        glUniform1f(glGetUniformLocation(lightingPipeline.shaderProgram, "linearAttenuation"), 0.1)
+        glUniform1f(glGetUniformLocation(lightingPipeline.shaderProgram, "quadraticAttenuation"), 0.01)
 
-        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "viewPosition"), viewPos[0], viewPos[1], viewPos[2])
-        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1))
-        phongTexturePipeline.drawCall(gpuTable)
+        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "viewPosition"), viewPos[0], viewPos[1], viewPos[2])
+        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1))
+        lightingPipeline.drawCall(gpuTable)
 
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
         glfw.swap_buffers(window)
