@@ -85,7 +85,8 @@ def rotate2D(vector, theta):
 
     return np.array([
         cos_theta * vector[0] - sin_theta * vector[1],
-        sin_theta * vector[0] + cos_theta * vector[1]
+        sin_theta * vector[0] + cos_theta * vector[1],
+        0
     ], dtype = np.float32)
 
 def collide(circle1, circle2):
@@ -122,8 +123,8 @@ def collide(circle1, circle2):
         circle2.velocity = (v1n + v2t) * COEF_RESTITUCION
 
 def areColliding(circle1, circle2):
-    assert isinstance(circle1, Circle)
-    assert isinstance(circle2, Circle)
+    assert isinstance(circle1, Ball)
+    assert isinstance(circle2, Ball)
 
     difference = circle2.position - circle1.position
     distance = np.linalg.norm(difference)
@@ -279,6 +280,7 @@ if __name__ == "__main__":
         t1 = glfw.get_time()
         dt = t1 - t0
         t0 = t1
+        deltaTime = perfMonitor.getDeltaTime()
 
         if (glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS):
             camera_theta -= 2 * dt
@@ -315,6 +317,20 @@ if __name__ == "__main__":
                 np.array([camX,camY,7.5]),
                 np.array([0,0,1])
             )
+
+        #Physics!
+        for ball in balls:
+            #Moving each sphere
+            ball.action(deltaTime)
+
+            # checking and processing collisions among spheres
+            collideWithBorder(ball)
+
+        # checking and processing collisions among spheres
+        for i in range(len(balls)):
+            for j in range(i+1, len(balls)):
+                if areColliding(balls[i], balls[j]):
+                    collide(balls[i], balls[j])
 
 
         # Clearing the screen in both, color and depth
