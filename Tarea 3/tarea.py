@@ -33,6 +33,7 @@ class Controller:
         self.accurate = False
         self.temblor = False
         self.temblor2 = False
+        self.carga = 1
 
 # We will use the global controller as communication with the callback function
 controller = Controller()
@@ -58,6 +59,8 @@ class Ball:
         self.position = position
         self.radius = RADIUS
         self.velocity = velocity
+        self.mesa = True
+        self.temp = 0
 
     def action(self, deltaTime):
         # Euler integration
@@ -72,12 +75,15 @@ class Ball:
         self.position += self.velocity * deltaTime
 
     def draw(self):
-        glUniformMatrix4fv(glGetUniformLocation(self.pipeline.shaderProgram, "model"), 1, GL_TRUE,tr.matmul([
-            tr.translate(self.position[0], self.position[1], self.position[2]),
-            tr.uniformScale(0.5)
-        ])
-        )
-        self.pipeline.drawCall(self.gpuShape)
+        if self.mesa:
+            glUniformMatrix4fv(glGetUniformLocation(self.pipeline.shaderProgram, "model"), 1, GL_TRUE,tr.matmul([
+                tr.translate(self.position[0], self.position[1], self.position[2]),
+                tr.uniformScale(0.5)
+            ])
+            )
+            self.pipeline.drawCall(self.gpuShape)
+        else:
+            pass
 
 def rotate2D(vector, theta):
     """
@@ -173,6 +179,9 @@ def on_key(window, key, scancode, action, mods):
         controller.temblor = True
 
 
+
+
+
 if __name__ == "__main__":
 
     # Initialize glfw
@@ -221,6 +230,12 @@ if __name__ == "__main__":
     gpuTaco = createGPUShape(mvpTexturePipeline, taco)
     gpuTaco.texture = es.textureSimpleSetup(
         getAssetPath("madera4.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+    
+    #Flecha
+    flecha = objr.readOBJ2(getAssetPath('arrow.obj'))
+    gpuFlecha = createGPUShape(mvpTexturePipeline, flecha)
+    gpuFlecha.texture = es.textureSimpleSetup(
+        getAssetPath("vidrio.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
     
     #Bolas
     balls = []
@@ -287,8 +302,16 @@ if __name__ == "__main__":
         balls.append(bola)
 
     
-
-    #Lighting uniforms
+    #Hoyos
+    hoyos = np.array([
+        np.array([-11.4, -5.2, 6.8 + RADIUS]),
+        np.array([-11.4, 5.2, 6.8 + RADIUS]),
+        np.array([0, -5.2, 6.8 + RADIUS]),
+        np.array([0, 5.2, 6.8 + RADIUS]),
+        np.array([11.4, -5.2, 6.8 + RADIUS]),
+        np.array([11.4, 5.2, 6.8 + RADIUS]),
+    ])
+        
     
     t0 = glfw.get_time()
     camera_theta = -np.pi/2
@@ -328,10 +351,10 @@ if __name__ == "__main__":
         else:
 
             if (glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS):
-                camera_theta -= 0.5 * dt
+                camera_theta -= 0.1 * dt
 
             if (glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS):
-                camera_theta += 0.5* dt
+                camera_theta += 0.1* dt
         
         if controller.viewTop:
             # Setting up the projection transform
@@ -380,6 +403,11 @@ if __name__ == "__main__":
             if np.linalg.norm(ball.velocity) > 0:
                 controller.movimiento = True
 
+            for j in range(len(hoyos)):
+                if (ball.position[0] - hoyos[j][0])**2 + (ball.position[1] - hoyos[j][1])**2 <= 1**2:
+                    ball.mesa = False
+                    balls.remove(ball)
+
         # checking and processing collisions among spheres
         for i in range(len(balls)):
             for j in range(i+1, len(balls)):
@@ -420,7 +448,7 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(0.1))
         lightingPipeline.drawCall(gpuTable)
 
-        # Drawing Taco
+        # Drawing Taco and arrow
         if not controller.movimiento:
             glUseProgram(mvpTexturePipeline.shaderProgram)
             glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
@@ -432,6 +460,16 @@ if __name__ == "__main__":
                 tr.uniformScale(3)
             ]))
             mvpTexturePipeline.drawCall(gpuTaco)
+
+            if controller.accurate:
+                glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                    tr.translate(posBolaBlanca[0], posBolaBlanca[1], posBolaBlanca[2]),
+                    tr.rotationZ(-camera_theta),
+                    tr.rotationY(0),
+                    tr.rotationX(np.pi/2),
+                    tr.scale(0.1, 0.5, controller.carga)
+                ]))
+                mvpTexturePipeline.drawCall(gpuFlecha)
 
         # Drawing balls
         glUseProgram(phongSimplePipeline.shaderProgram)
@@ -462,5 +500,5 @@ if __name__ == "__main__":
     gpuTable.clear()
     gpuTaco.clear()
     for i in range(len(balls)):
-        balls[i].clear()
+        balls[i].gpuShape.clear()
     glfw.terminate()
