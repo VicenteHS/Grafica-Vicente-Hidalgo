@@ -449,3 +449,55 @@ def createTextureNormalsCube(image_filename):
          20,21,22,22,23,20] # Y-
 
     return Shape(vertices, indices, image_filename)
+
+
+def createTexCubeNormal():
+    # Creating the end by a shape that is a cube with normals and textures
+    # Defining locations,texture coordinates and normals for each vertex of the shape  
+    vertices = [
+    #   positions            tex coords   normals
+    # Z+
+        -0.5, -0.5,  0.5,    0, 1,        0,0,1,
+         0.5, -0.5,  0.5,    1, 1,        0,0,1,
+         0.5,  0.5,  0.5,    1, 0,        0,0,1,
+        -0.5,  0.5,  0.5,    0, 0,        0,0,1,   
+    # Z-          
+        -0.5, -0.5, -0.5,    0, 1,        0,0,-1,
+         0.5, -0.5, -0.5,    1, 1,        0,0,-1,
+         0.5,  0.5, -0.5,    1, 0,        0,0,-1,
+        -0.5,  0.5, -0.5,    0, 0,        0,0,-1,
+       
+    # X+          
+         0.5, -0.5, -0.5,    0, 1,        1,0,0,
+         0.5,  0.5, -0.5,    1, 1,        1,0,0,
+         0.5,  0.5,  0.5,    1, 0,        1,0,0,
+         0.5, -0.5,  0.5,    0, 0,        1,0,0,   
+    # X-          
+        -0.5, -0.5, -0.5,    0, 1,        -1,0,0,
+        -0.5,  0.5, -0.5,    1, 1,        -1,0,0,
+        -0.5,  0.5,  0.5,    1, 0,        -1,0,0,
+        -0.5, -0.5,  0.5,    0, 0,        -1,0,0,   
+    # Y+          
+        -0.5,  0.5, -0.5,    0, 1,        0,1,0,
+         0.5,  0.5, -0.5,    1, 1,        0,1,0,
+         0.5,  0.5,  0.5,    1, 0,        0,1,0,
+        -0.5,  0.5,  0.5,    0, 0,        0,1,0,   
+    # Y-          
+        -0.5, -0.5, -0.5,    0, 1,        0,-1,0,
+         0.5, -0.5, -0.5,    1, 1,        0,-1,0,
+         0.5, -0.5,  0.5,    1, 0,        0,-1,0,
+        -0.5, -0.5,  0.5,    0, 0,        0,-1,0
+        ]   
+
+    # Defining connections among vertices
+    # We have a triangle every 3 indices specified
+    indices = [
+          0, 1, 2, 2, 3, 0, # Z+
+          7, 6, 5, 5, 4, 7, # Z-
+          8, 9,10,10,11, 8, # X+
+         15,14,13,13,12,15, # X-
+         19,18,17,17,16,19, # Y+
+         20,21,22,22,23,20] # Y-
+
+    
+    return Shape(vertices, indices)

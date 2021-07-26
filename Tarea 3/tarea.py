@@ -19,6 +19,7 @@ import grafica.scene_graph as sg
 import grafica.sphere as sp
 import math
 import trayectoria
+import displacement_view as dv
 
 
 CIRCLE_DISCRETIZATION = 20
@@ -220,15 +221,21 @@ def on_key(window, key, scancode, action, mods):
 
 # Creacion de suelo
 def create_floor(pipeline):
-    shapeFloor = bs.createTextureQuad(1,1)
-    gpuFloor = es.GPUShape().initBuffers()
-    pipeline.setupVAO(gpuFloor)
+    shapeFloor = bs.createTexCubeNormal()
+    gpuFloor = dv.TexGPUShape().initBuffers()
+    displacementePipeline.setupVAO(gpuFloor)
+    gpuFloor.fillBuffers(shapeFloor.vertices, shapeFloor.indices, GL_DYNAMIC_DRAW)
     gpuFloor.texture = es.textureSimpleSetup(
         getAssetPath("gris.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
-    gpuFloor.fillBuffers(shapeFloor.vertices, shapeFloor.indices, GL_STATIC_DRAW)
+    gpuFloor.texture2 = es.textureSimpleSetup(
+        getAssetPath("Textura1.PNG"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+
 
     floor = sg.SceneGraphNode("floor")
-    floor.transform = tr.matmul([tr.translate(0, 0, 0),tr.scale(300,300,300)])
+    floor.transform = tr.matmul([
+        tr.translate(0, 0, 0),
+        tr.scale(350,350,0.01)])
+
     floor.childs += [gpuFloor]
 
     return floor
@@ -325,6 +332,7 @@ if __name__ == "__main__":
     gouraudTexturePipeline = ls.SimpleTextureGouraudShaderProgram()
     lightingPipeline = ls.MultipleTexturePhongShaderProgram()
     curvePipeline = trayectoria.CurveShader()
+    displacementePipeline = dv.Displacement3D()
     
 
     # Setting up the clear screen color
@@ -355,7 +363,7 @@ if __name__ == "__main__":
     
     #Skybox and suelo
     sgSkybox = create_skybox(mvpTexturePipeline)
-    sgFloor = create_floor(mvpTexturePipeline)
+    sgFloor = create_floor(displacementePipeline)
     
     #Bolas
     balls = []
@@ -684,14 +692,50 @@ if __name__ == "__main__":
                 ]))
         lightingPipeline.drawCall(gpuTable)
 
-        # Drawing Taco and arrow
+        # Drawing
+        glUseProgram(displacementePipeline.shaderProgram)
+        # White light to see better the tobogan
+        glUniform3f(glGetUniformLocation(displacementePipeline.shaderProgram, "La"), 1.0 ,1.0 ,1.0)
+        glUniform3f(glGetUniformLocation(displacementePipeline.shaderProgram, "Ld"), 0.5, 0.5, 0.5)
+        glUniform3f(glGetUniformLocation(displacementePipeline.shaderProgram, "Ls"), 0.5, 0.5, 0.5)
+
+        # Object is barely visible at only ambient. Bright white for diffuse and specular components.
+        glUniform3f(glGetUniformLocation(displacementePipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
+        glUniform3f(glGetUniformLocation(displacementePipeline.shaderProgram, "Kd"), 0.7, 0.7, 0.7)
+        glUniform3f(glGetUniformLocation(displacementePipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
+
+        
+        glUniform3f(glGetUniformLocation(displacementePipeline.shaderProgram, "lightPosition"), -5, -5, 5)
+        glUniform3f(glGetUniformLocation(displacementePipeline.shaderProgram, "viewPosition"), viewPos[0], viewPos[1], viewPos[2])
+        glUniform1ui(glGetUniformLocation(displacementePipeline.shaderProgram, "shininess"), 100)
+
+        glUniform1f(glGetUniformLocation(displacementePipeline.shaderProgram, "constantAttenuation"), 0.0002)
+        glUniform1f(glGetUniformLocation(displacementePipeline.shaderProgram, "linearAttenuation"), 0.028)
+        glUniform1f(glGetUniformLocation(displacementePipeline.shaderProgram, "quadraticAttenuation"), 0.01)
+
+        glUniformMatrix4fv(glGetUniformLocation(displacementePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(displacementePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+
+
+        # Binding samplers to both texture units
+        glUniform1i(glGetUniformLocation(displacementePipeline.shaderProgram, "WaterText"), 0)
+        glUniform1i(glGetUniformLocation(displacementePipeline.shaderProgram, "DisplaceText"), 1)
+
+        # Sending the mouse vertical location to our shader
+        glUniform1f(glGetUniformLocation(displacementePipeline.shaderProgram, "time"), t1)
+        glUniform1f(glGetUniformLocation(displacementePipeline.shaderProgram, "Vm"), 0.6)
+
+        sg.drawSceneGraphNode(sgFloor, displacementePipeline, "model")
+
+        # Drawing skybox
         glUseProgram(mvpTexturePipeline.shaderProgram)
         glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
         glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
         #glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
-        sg.drawSceneGraphNode(sgSkybox, mvpTexturePipeline, "model")
-        sg.drawSceneGraphNode(sgFloor, mvpTexturePipeline, "model")
         
+        sg.drawSceneGraphNode(sgSkybox, mvpTexturePipeline, "model")
+        
+        # Drawing Taco and arrow
         if not controller.movimiento:
             glUseProgram(mvpTexturePipeline.shaderProgram)
             glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
