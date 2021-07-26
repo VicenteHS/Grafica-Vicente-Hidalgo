@@ -15,8 +15,10 @@ import grafica.performance_monitor as pm
 import ex_obj_reader as objr
 from grafica.assets_path import getAssetPath
 import grafica.lighting_shaders as ls
+import grafica.scene_graph as sg
 import grafica.sphere as sp
 import math
+import trayectoria
 
 
 CIRCLE_DISCRETIZATION = 20
@@ -30,11 +32,15 @@ class Controller:
         self.fillPolygon = True
         self.viewTop = True
         self.movimiento = False
-        self.accurate = False
         self.temblor = False
         self.temblor2 = False
-        self.carga = 1
+        self.accurate = False
         self.temperatura = False 
+        # # # self.trayectoria = True
+        # # # self.made = False
+        # # # self.made2 = False
+        # # # self.made3 = False
+        # # # self.carga = 0
 
 # We will use the global controller as communication with the callback function
 controller = Controller()
@@ -149,11 +155,11 @@ def areColliding(circle1, circle2):
 def collideWithBorder(circle):
 
     # Right
-    if circle.position[0] + circle.radius*0.5 > 11.0:
+    if circle.position[0] + circle.radius*0.5 > 11.5:
         circle.velocity[0] = -abs(circle.velocity[0])
 
     # Left
-    if circle.position[0] < -11.0 + circle.radius*0.5:
+    if circle.position[0] < -11.5 + circle.radius*0.5:
         circle.velocity[0] = abs(circle.velocity[0])
 
     # Top
@@ -190,6 +196,80 @@ def on_key(window, key, scancode, action, mods):
 
 
 
+# Creacion de suelo
+def create_floor(pipeline):
+    shapeFloor = bs.createTextureQuad(8, 8)
+    gpuFloor = es.GPUShape().initBuffers()
+    pipeline.setupVAO(gpuFloor)
+    gpuFloor.texture = es.textureSimpleSetup(
+        getAssetPath("vidrio.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+    gpuFloor.fillBuffers(shapeFloor.vertices, shapeFloor.indices, GL_STATIC_DRAW)
+
+    floor = sg.SceneGraphNode("floor")
+    floor.transform = tr.matmul([tr.translate(0, 0, 0),tr.scale(100,100,100)])
+    floor.childs += [gpuFloor]
+
+    return floor
+
+#Creacion de skybox
+def create_skybox(pipeline):
+    shapeFirstSky = bs.createTextureQuad(1,1)
+    gpuFirstSky = es.GPUShape().initBuffers()
+    pipeline.setupVAO(gpuFirstSky)
+    gpuFirstSky.fillBuffers(shapeFirstSky.vertices, shapeFirstSky.indices, GL_STATIC_DRAW)
+    gpuFirstSky.texture = es.textureSimpleSetup(
+        getAssetPath("temp1.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+    
+    #################################################################################################
+    shapeSecondSky = bs.createTextureQuad(1,1)
+    gpuSecondSky = es.GPUShape().initBuffers()
+    pipeline.setupVAO(gpuSecondSky)
+    gpuSecondSky.fillBuffers(shapeSecondSky.vertices, shapeSecondSky.indices, GL_STATIC_DRAW)
+    gpuSecondSky.texture = es.textureSimpleSetup(
+        getAssetPath("temp2.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+    ####################################################################################################
+
+    shpeThirdSky = bs.createTextureQuad(1,1)
+    gpuThirdSky = es.GPUShape().initBuffers()
+    pipeline.setupVAO(gpuThirdSky)
+    gpuThirdSky.fillBuffers(shpeThirdSky.vertices, shpeThirdSky.indices, GL_STATIC_DRAW)
+    gpuThirdSky.texture = es.textureSimpleSetup(
+        getAssetPath("temp3.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+    ####################################################################################################
+
+    shapeFourthSky = bs.createTextureQuad(1,1)
+    gpuFourthSky = es.GPUShape().initBuffers()
+    pipeline.setupVAO(gpuFourthSky)
+    gpuFourthSky.fillBuffers(shapeFourthSky.vertices, shapeFourthSky.indices, GL_STATIC_DRAW)
+    gpuFourthSky.texture = es.textureSimpleSetup(
+        getAssetPath("temp4.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+    ####################################################################################################
+    
+
+    firstSky = sg.SceneGraphNode("firstSky")
+    firstSky.transform = tr.matmul([tr.translate(-30, 0, 10), tr.rotationX(0), tr.rotationY(math.pi/2), tr.uniformScale(40)])
+    firstSky.childs += [gpuFirstSky]
+
+    ##########################################################
+    secondSky = sg.SceneGraphNode("secondSky")
+    secondSky.transform = tr.matmul([tr.translate(0, 20, 10), tr.rotationX(math.pi/2), tr.rotationY(0), tr.uniformScale(80)])
+    secondSky.childs += [gpuSecondSky]
+
+    ##########################################################
+    thirdSky = sg.SceneGraphNode("thirdSky")
+    thirdSky.transform = tr.matmul([tr.translate(30, 0, 10), tr.rotationX(0), tr.rotationY(-math.pi/2), tr.uniformScale(40)])
+    thirdSky.childs += [gpuThirdSky]
+
+    ##########################################################
+    fourthSky = sg.SceneGraphNode("fourthSky")
+    fourthSky.transform = tr.matmul([tr.translate(0, -20, 10), tr.rotationX(-math.pi/2), tr.rotationY(0), tr.uniformScale(80)])
+    fourthSky.childs += [gpuFourthSky]
+
+    newSkybox = sg.SceneGraphNode("newSkybox")
+    newSkybox.transform = tr.identity()
+    newSkybox.childs += [firstSky, secondSky, thirdSky, fourthSky]
+    ############################################################
+    return newSkybox
 
 if __name__ == "__main__":
 
@@ -217,7 +297,7 @@ if __name__ == "__main__":
     phongTexturePipeline = ls.SimpleTexturePhongShaderProgram()
     gouraudTexturePipeline = ls.SimpleTextureGouraudShaderProgram()
     lightingPipeline = ls.MultipleTexturePhongShaderProgram()
-
+    curvePipeline = trayectoria.CurveShader()
     
 
     # Setting up the clear screen color
@@ -245,6 +325,10 @@ if __name__ == "__main__":
     gpuFlecha = createGPUShape(mvpTexturePipeline, flecha)
     gpuFlecha.texture = es.textureSimpleSetup(
         getAssetPath("vidrio.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+    
+    #Skybox and suelo
+    sgSkybox = create_skybox(mvpTexturePipeline)
+    sgFloor = create_floor(mvpTexturePipeline)
     
     #Bolas
     balls = []
@@ -320,17 +404,18 @@ if __name__ == "__main__":
     
     #Hoyos
     hoyos = np.array([
-        np.array([-11.4, -5.2, 6.8 + RADIUS]),
-        np.array([-11.4, 5.2, 6.8 + RADIUS]),
-        np.array([0, -5.2, 6.8 + RADIUS]),
-        np.array([0, 5.2, 6.8 + RADIUS]),
-        np.array([11.4, -5.2, 6.8 + RADIUS]),
-        np.array([11.4, 5.2, 6.8 + RADIUS]),
+        np.array([-11.4, -5.5, 6.8 + RADIUS]),
+        np.array([-11.4, 5.5, 6.8 + RADIUS]),
+        np.array([0, -5.5, 6.8 + RADIUS]),
+        np.array([0, 5.5, 6.8 + RADIUS]),
+        np.array([11.4, -5.5, 6.8 + RADIUS]),
+        np.array([11.4, 5.5, 6.8 + RADIUS]),
     ])
         
     
     t0 = glfw.get_time()
     camera_theta = -np.pi/2
+    trayec = []
 
     perfMonitor = pm.PerformanceMonitor(glfw.get_time(), 0.5)
 
@@ -349,7 +434,9 @@ if __name__ == "__main__":
 
         # Getting the time difference from the previous iteration
         t1 = glfw.get_time()
+        t_trayectoria = glfw.get_time()
         dt = t1 - t0
+        # # # controller.carga += dt
         t0 = t1
         deltaTime = perfMonitor.getDeltaTime()
         bolaBlanca = balls[0]
@@ -422,8 +509,12 @@ if __name__ == "__main__":
 
             for j in range(len(hoyos)):
                 if (ball.position[0] - hoyos[j][0])**2 + (ball.position[1] - hoyos[j][1])**2 <= 1**2:
-                    ball.mesa = False
-                    balls.remove(ball)
+                    if not ball == balls[0]:
+                        ball.mesa = False
+                        balls.remove(ball)
+                    else:
+                        ball.position = np.array([6, 0, 6.8 + RADIUS])
+                        ball.velocity = np.array([0.0, 0.0, 0.0])
 
         ballIntensity = np.linalg.norm(bolaBlanca.velocity)
 
@@ -454,6 +545,32 @@ if __name__ == "__main__":
         if (glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS) and  not controller.movimiento:
             bolaBlanca.velocity = np.array([np.sin(camera_theta),np.cos(camera_theta), 0.0])*10
 
+        # # # #Trayectoria
+        # # # if controller.trayectoria:
+        # # #     if controller.movimiento:
+        # # #         if controller.carga >= 0.2:
+        # # #             if len(trayec) == 13:
+        # # #                 curve = trayectoria.createLine(5,trayec)[0]
+        # # #                 controller.made = True
+        # # #                 controller.made2 = True
+        # # #                 controller.trayectoria = False
+        # # #             else:
+        # # #                 trayec.append(bolaBlanca.position)
+        # # #                 controller.carga = 0
+        # # #                 print(len(trayec))
+            
+
+
+        # # # else:
+        # # #     trayec = []
+        
+        # # # if controller.made2 and not controller.made3:
+        # # #     gpuCurve = createGPUShape(curvePipeline, curve)
+        # # #     controller.made3 = True
+
+
+
+
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
@@ -464,6 +581,7 @@ if __name__ == "__main__":
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
         # Drawing shapes
+        # Drawing Table
         glUseProgram(lightingPipeline.shaderProgram)
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ld"), 0.5, 0.5, 0.5)
@@ -485,6 +603,13 @@ if __name__ == "__main__":
         lightingPipeline.drawCall(gpuTable)
 
         # Drawing Taco and arrow
+        glUseProgram(mvpTexturePipeline.shaderProgram)
+        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+        #glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        sg.drawSceneGraphNode(sgSkybox, mvpTexturePipeline, "model")
+        sg.drawSceneGraphNode(sgFloor, mvpTexturePipeline, "model")
+        
         if not controller.movimiento:
             glUseProgram(mvpTexturePipeline.shaderProgram)
             glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
@@ -503,7 +628,7 @@ if __name__ == "__main__":
                     tr.rotationZ(-camera_theta),
                     tr.rotationY(0),
                     tr.rotationX(np.pi/2),
-                    tr.scale(0.1, 0.5, controller.carga)
+                    tr.scale(0.1, 0.5, 1)
                 ]))
                 mvpTexturePipeline.drawCall(gpuFlecha)
 
@@ -549,6 +674,14 @@ if __name__ == "__main__":
         glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "viewPosition"), viewPos[0], viewPos[1], viewPos[2])
         glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
         balls[0].draw()
+
+        # # # Drawing trayectoria
+        # # # if controller.made3:
+        # # #     glUseProgram(curvePipeline.shaderProgram)
+        # # #     glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        # # #     glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+        # # #     glUniformMatrix4fv(glGetUniformLocation(curvePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(1.0))
+        # # #     curvePipeline.drawCall(gpuCurve, GL_LINE_STRIP)
 
     
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
