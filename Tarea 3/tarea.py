@@ -31,6 +31,8 @@ class Controller:
         self.viewTop = True
         self.movimiento = False
         self.accurate = False
+        self.temblor = False
+        self.temblor2 = False
 
 # We will use the global controller as communication with the callback function
 controller = Controller()
@@ -120,8 +122,8 @@ def collide(circle1, circle2):
 
         # swaping the normal components...
         # this means that we applying energy and momentum conservation
-        circle1.velocity = (v2n + v1t) * COEF_RESTITUCION
-        circle2.velocity = (v1n + v2t) * COEF_RESTITUCION
+        circle1.velocity = (v2n + v1t) 
+        circle2.velocity = (v1n + v2t)
 
 def areColliding(circle1, circle2):
     assert isinstance(circle1, Ball)
@@ -166,7 +168,9 @@ def on_key(window, key, scancode, action, mods):
     
     elif key == glfw.KEY_A:
         controller.accurate = not controller.accurate
-
+    
+    elif key == glfw.KEY_T:
+        controller.temblor = True
 
 
 if __name__ == "__main__":
@@ -259,6 +263,25 @@ if __name__ == "__main__":
         np.array([1,1,0]),
         np.array([0,0,1])
     ]
+
+    velocityBall = [
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
+        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64)
+    ]
     for i in range(16):
         bola = Ball(phongSimplePipeline, positionBalls[i], np.array([0.0, 0.0, 0.0]), colorBalls[i][0], colorBalls[i][1], colorBalls[i][2])
         balls.append(bola)
@@ -338,6 +361,13 @@ if __name__ == "__main__":
                 posBolaBlanca,
                 np.array([0,0,1])
             )
+
+        if controller.temblor and not controller.temblor2:
+            for i in range(1,len(balls)):
+                balls[i].velocity = velocityBall[i]
+                controller.temblor2 = True
+
+
 
         #Physics!
         for ball in balls:
