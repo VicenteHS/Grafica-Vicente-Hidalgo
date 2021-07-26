@@ -187,6 +187,7 @@ if __name__ == "__main__":
 
     # Defining shader programs
     phongSimplePipeline = ls.SimplePhongShaderProgram()
+    mvpTexturePipeline = es.SimpleTextureModelViewProjectionShaderProgram()
     phongTexturePipeline = ls.SimpleTexturePhongShaderProgram()
     gouraudTexturePipeline = ls.SimpleTextureGouraudShaderProgram()
     lightingPipeline = ls.MultipleTexturePhongShaderProgram()
@@ -206,6 +207,12 @@ if __name__ == "__main__":
     gpuTable = createGPUShape(gouraudTexturePipeline, table)
     gpuTable.texture = es.textureSimpleSetup(
         getAssetPath("texturaRed2.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+    
+    #Taco
+    taco = objr.readOBJ2(getAssetPath('taco.obj'))
+    gpuTaco = createGPUShape(mvpTexturePipeline, taco)
+    gpuTaco.texture = es.textureSimpleSetup(
+        getAssetPath("madera2.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
     
     #Bolas
     balls = []
@@ -257,7 +264,7 @@ if __name__ == "__main__":
     #Lighting uniforms
     
     t0 = glfw.get_time()
-    camera_theta = 0
+    camera_theta = -np.pi/2
 
     perfMonitor = pm.PerformanceMonitor(glfw.get_time(), 0.5)
 
@@ -370,6 +377,16 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(0.1))
         lightingPipeline.drawCall(gpuTable)
 
+        # Drawing Taco
+        glUseProgram(mvpTexturePipeline.shaderProgram)
+        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+            tr.translate(0, 0, 7.2),
+            tr.uniformScale(3)
+        ]))
+        mvpTexturePipeline.drawCall(gpuTaco)
+
         # Drawing balls
         glUseProgram(phongSimplePipeline.shaderProgram)
         glUniform3f(glGetUniformLocation(phongSimplePipeline.shaderProgram, "La"), 0.85, 0.85, 0.85)
@@ -391,9 +408,13 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(phongSimplePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
         for i in range(len(balls)):
             balls[i].draw()
+        
     
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
         glfw.swap_buffers(window)
     
     gpuTable.clear()
+    gpuTaco.clear()
+    for i in range(len(balls)):
+        balls[i].clear()
     glfw.terminate()

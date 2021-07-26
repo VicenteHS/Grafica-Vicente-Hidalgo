@@ -117,6 +117,58 @@ def readOBJ(filename):
 
         return bs.Shape(vertexData, indices)
 
+def readOBJ2(filename):
+
+    vertices = []
+    normals = []
+    textCoords= []
+    faces = []
+
+    with open(filename, 'r') as file:
+        for line in file.readlines():
+            aux = line.strip().split(' ')
+            
+            if aux[0] == 'v':
+                vertices += [[float(coord) for coord in aux[1:]]]
+
+            #elif aux[0] == 'vn':
+            #    normals += [[float(coord) for coord in aux[1:]]]
+
+            elif aux[0] == 'vt':
+                assert len(aux[1:]) == 2, "Texture coordinates with different than 2 dimensions are not supported"
+                textCoords += [[float(coord) for coord in aux[1:]]]
+
+            elif aux[0] == 'f':
+                N = len(aux)                
+                faces += [[readFaceVertex(faceVertex) for faceVertex in aux[1:4]]]
+                for i in range(3, N-1):
+                    faces += [[readFaceVertex(faceVertex) for faceVertex in [aux[i], aux[i+1], aux[1]]]]
+
+        vertexData = []
+        indices = []
+        index = 0
+
+        # Per previous construction, each face is a triangle
+        for face in faces:
+
+            # Checking each of the triangle vertices
+            for i in range(0,3):
+                vertex = vertices[face[i][0]-1]
+                #Adding textureCoords
+                texCoords = textCoords[face[i][1]-1]
+
+                vertexData += [
+                    vertex[0], vertex[1], vertex[2],
+                    #Adding texture coords instead of color
+                    texCoords[0],texCoords[1],
+                ]
+
+            # Connecting the 3 vertices to create a triangle
+            indices += [index, index + 1, index + 2]
+            index += 3        
+
+        return bs.Shape(vertexData, indices)
+
 
 if __name__ == "__main__":
 
