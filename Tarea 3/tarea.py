@@ -74,6 +74,8 @@ class Ball:
         self.radius = RADIUS
         self.velocity = velocity
         self.mesa = True
+        self.sombraPipeline = es.SimpleModelViewProjectionShaderProgram()
+        self.sombra = createGPUShape(self.sombraPipeline,bs.createColorCircle(20, 0, 0, 0))
 
     def action(self, deltaTime):
         # Euler integration
@@ -97,6 +99,17 @@ class Ball:
             self.pipeline.drawCall(self.gpuShape)
         else:
             pass
+    def draw2(self):
+        if self.mesa:
+            glUniformMatrix4fv(glGetUniformLocation(self.sombraPipeline.shaderProgram, "model"), 1, GL_TRUE,tr.matmul([
+                tr.translate(self.position[0], self.position[1], self.position[2] - RADIUS*0.5),
+                tr.uniformScale(0.5)
+            ])
+            )
+            self.sombraPipeline.drawCall(self.sombra)
+        else:
+            pass
+
 
 def rotate2D(vector, theta):
     """
@@ -202,15 +215,15 @@ def on_key(window, key, scancode, action, mods):
 
 # Creacion de suelo
 def create_floor(pipeline):
-    shapeFloor = bs.createTextureQuad(8, 8)
+    shapeFloor = bs.createTextureQuad(1,1)
     gpuFloor = es.GPUShape().initBuffers()
     pipeline.setupVAO(gpuFloor)
     gpuFloor.texture = es.textureSimpleSetup(
-        getAssetPath("vidrio.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+        getAssetPath("gris.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
     gpuFloor.fillBuffers(shapeFloor.vertices, shapeFloor.indices, GL_STATIC_DRAW)
 
     floor = sg.SceneGraphNode("floor")
-    floor.transform = tr.matmul([tr.translate(0, 0, 0),tr.scale(150,150,150)])
+    floor.transform = tr.matmul([tr.translate(0, 0, 0),tr.scale(300,300,300)])
     floor.childs += [gpuFloor]
 
     return floor
@@ -252,25 +265,25 @@ def create_skybox(pipeline):
 
     firstSky = sg.SceneGraphNode("firstSky")
     firstSky.transform = tr.matmul([
-        tr.translate(-60, 0, 40), tr.rotationX(0), tr.rotationY(math.pi/2), tr.rotationZ(np.pi/2), tr.uniformScale(80)])
+        tr.translate(-160, 0, 40), tr.rotationX(0), tr.rotationY(math.pi/2), tr.rotationZ(np.pi/2), tr.scale(160,80,160)])
     firstSky.childs += [gpuFirstSky]
 
     ##########################################################
     secondSky = sg.SceneGraphNode("secondSky")
     secondSky.transform = tr.matmul([
-        tr.translate(0, 40, 80), tr.rotationX(math.pi/2), tr.rotationY(0), tr.rotationZ(0),tr.uniformScale(160)])
+        tr.translate(0, 80, 40), tr.rotationX(math.pi/2), tr.rotationY(0), tr.rotationZ(0),tr.scale(320,80,320)])
     secondSky.childs += [gpuSecondSky]
 
     ##########################################################
     thirdSky = sg.SceneGraphNode("thirdSky")
     thirdSky.transform = tr.matmul([
-        tr.translate(60, 0, 40), tr.rotationX(0), tr.rotationY(-math.pi/2), tr.rotationZ(-np.pi/2),tr.uniformScale(80)])
+        tr.translate(160, 0, 40), tr.rotationX(0), tr.rotationY(-math.pi/2), tr.rotationZ(-np.pi/2),tr.scale(160,80,160)])
     thirdSky.childs += [gpuThirdSky]
 
     ##########################################################
     fourthSky = sg.SceneGraphNode("fourthSky")
     fourthSky.transform = tr.matmul([
-        tr.translate(0, -40, 80), tr.rotationX(-math.pi/2), tr.rotationY(0), tr.rotationZ(np.pi),tr.uniformScale(160)])
+        tr.translate(0, -80, 40), tr.rotationX(-math.pi/2), tr.rotationY(0), tr.rotationZ(np.pi),tr.scale(320,80,320)])
     fourthSky.childs += [gpuFourthSky]
 
     newSkybox = sg.SceneGraphNode("newSkybox")
@@ -302,6 +315,7 @@ if __name__ == "__main__":
     # Defining shader programs
     phongSimplePipeline = ls.SimplePhongShaderProgram()
     mvpTexturePipeline = es.SimpleTextureModelViewProjectionShaderProgram()
+    mvpPipeline = es.SimpleModelViewProjectionShaderProgram()
     phongTexturePipeline = ls.SimpleTexturePhongShaderProgram()
     gouraudTexturePipeline = ls.SimpleTextureGouraudShaderProgram()
     lightingPipeline = ls.MultipleTexturePhongShaderProgram()
@@ -317,7 +331,7 @@ if __name__ == "__main__":
 
     # Creating shapes on GPU memory
     #Mesa
-    table = objr.readOBJ(getAssetPath('mesa3.obj'))
+    table = objr.readOBJ(getAssetPath('table.obj'))
     gpuTable = createGPUShape(gouraudTexturePipeline, table)
     gpuTable.texture = es.textureSimpleSetup(
         getAssetPath("texturaRed2.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
@@ -408,6 +422,8 @@ if __name__ == "__main__":
     for i in range(1,16):
         bola = Ball(phongSimplePipeline, positionBalls[i], np.array([0.0, 0.0, 0.0]), colorBalls[i][0], colorBalls[i][1], colorBalls[i][2])
         balls.append(bola)
+    
+
 
     
     #Hoyos
@@ -677,6 +693,14 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(phongSimplePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
         for i in range(1,len(balls)):
             balls[i].draw()
+
+        # Drawing Shadows
+        glUseProgram(mvpPipeline.shaderProgram)
+        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        for i in range(len(balls)):
+            balls[i].draw2()
         
         # Drawing White ball
         glUseProgram(phongTexturePipeline.shaderProgram)
