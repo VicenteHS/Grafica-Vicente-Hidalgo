@@ -37,6 +37,7 @@ class Controller:
         self.accurate = False
         self.temperatura = False
         self.camara2 = False
+        self.shearing = True
         # # # self.trayectoria = True
         # # # self.made = False
         # # # self.made2 = False
@@ -209,6 +210,10 @@ def on_key(window, key, scancode, action, mods):
 
     elif key == glfw.KEY_2:
         controller.camara2 = not controller.camara2
+
+    elif key == glfw.KEY_S:
+        controller.shearing = not controller.shearing
+
 
 
 
@@ -639,7 +644,44 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "viewPosition"), viewPos[0], viewPos[1], viewPos[2])
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(0.1))
+        if not controller.shearing:
+            glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(0.1))
+        else:
+            if len(balls) >=16: 
+                glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                    tr.shearing(np.sin(t1/5)/200,np.sin(t1/5)/200,0,0,0,0),
+                    tr.uniformScale(0.1)
+                ]))
+            elif len(balls) >=14: 
+                glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                    tr.shearing(np.sin(t1/3)/150,np.sin(t1/3)/150,0,0,0,0),
+                    tr.uniformScale(0.1)
+                ]))
+            elif len(balls) >=12: 
+                glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                    tr.shearing(np.sin(t1)/130,np.sin(t1)/130,0,0,0,0),
+                    tr.uniformScale(0.1)
+                ]))
+            elif len(balls) >=10: 
+                glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                    tr.shearing(np.sin(t1*2)/100,np.sin(t1)/100,0,0,0,0),
+                    tr.uniformScale(0.1)
+                ]))
+            elif len(balls) >=80: 
+                glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                    tr.shearing(np.sin(t1*5)/100,np.sin(t1*5)/100,0,0,0,0),
+                    tr.uniformScale(0.1)
+                ]))
+            elif len(balls) >=5: 
+                glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                    tr.shearing(np.sin(t1*10)/100,np.sin(t1)/100,0,0,0,0),
+                    tr.uniformScale(0.1)
+                ]))
+            elif len(balls) >=2: 
+                glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                    tr.shearing(np.sin(t1*20)/100,np.sin(t1)/100,0,0,0,0),
+                    tr.uniformScale(0.1)
+                ]))
         lightingPipeline.drawCall(gpuTable)
 
         # Drawing Taco and arrow
