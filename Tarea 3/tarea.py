@@ -30,6 +30,7 @@ class Controller:
         self.fillPolygon = True
         self.viewTop = True
         self.movimiento = False
+        self.accurate = False
 
 # We will use the global controller as communication with the callback function
 controller = Controller()
@@ -162,6 +163,9 @@ def on_key(window, key, scancode, action, mods):
 
     elif key == glfw.KEY_1:
         controller.viewTop = not controller.viewTop
+    
+    elif key == glfw.KEY_A:
+        controller.accurate = not controller.accurate
 
 
 
@@ -209,10 +213,10 @@ if __name__ == "__main__":
         getAssetPath("texturaRed2.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
     
     #Taco
-    taco = objr.readOBJ2(getAssetPath('taco.obj'))
+    taco = objr.readOBJ2(getAssetPath('taco2.obj'))
     gpuTaco = createGPUShape(mvpTexturePipeline, taco)
     gpuTaco.texture = es.textureSimpleSetup(
-        getAssetPath("madera2.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+        getAssetPath("madera4.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
     
     #Bolas
     balls = []
@@ -290,12 +294,21 @@ if __name__ == "__main__":
         posBolaBlanca = bolaBlanca.position
         controller.movimiento = False
 
-        if (glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS):
-            camera_theta -= 2 * dt
+        if not controller.accurate:
 
-        if (glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS):
-            camera_theta += 2* dt
+            if (glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS):
+                camera_theta -= 2 * dt
 
+            if (glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS):
+                camera_theta += 2* dt
+
+        else:
+
+            if (glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS):
+                camera_theta -= 0.5 * dt
+
+            if (glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS):
+                camera_theta += 0.5* dt
         
         if controller.viewTop:
             # Setting up the projection transform
@@ -378,14 +391,17 @@ if __name__ == "__main__":
         lightingPipeline.drawCall(gpuTable)
 
         # Drawing Taco
-        glUseProgram(mvpTexturePipeline.shaderProgram)
-        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
-            tr.translate(0, 0, 7.2),
-            tr.uniformScale(3)
-        ]))
-        mvpTexturePipeline.drawCall(gpuTaco)
+        if not controller.movimiento:
+            glUseProgram(mvpTexturePipeline.shaderProgram)
+            glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+            glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+            glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                tr.translate(posBolaBlanca[0], posBolaBlanca[1], posBolaBlanca[2]),
+                tr.rotationZ(-camera_theta),
+                tr.rotationX(-np.pi/12),
+                tr.uniformScale(3)
+            ]))
+            mvpTexturePipeline.drawCall(gpuTaco)
 
         # Drawing balls
         glUseProgram(phongSimplePipeline.shaderProgram)
