@@ -21,7 +21,7 @@ import math
 
 CIRCLE_DISCRETIZATION = 20
 RADIUS = 0.6
-COEF_FRICTION = 0.5
+COEF_FRICTION = 0.2
 COEF_RESTITUCION = 1
 
 # A class to store the application control
@@ -59,12 +59,12 @@ class Ball:
     def action(self, deltaTime):
         # Euler integration
         normaVelocidad = np.linalg.norm(self.velocity)
-        if normaVelocidad<0.1:
+        if normaVelocidad<0.01:
             self.velocity = np.array([0.0,0.0,0.0])
-        if normaVelocidad == 0:
             friccion = COEF_FRICTION *self.velocity
+
         else:
-            friccion = COEF_FRICTION * np.linalg.norm(self.velocity)
+            friccion = COEF_FRICTION * (self.velocity/np.linalg.norm(self.velocity))*-10
         self.velocity += deltaTime * friccion
         self.position += self.velocity * deltaTime
 
@@ -128,25 +128,25 @@ def areColliding(circle1, circle2):
 
     difference = circle2.position - circle1.position
     distance = np.linalg.norm(difference)
-    collisionDistance = circle2.radius + circle1.radius
+    collisionDistance = circle2.radius*0.5 + circle1.radius*0.5
     return distance < collisionDistance
 
 def collideWithBorder(circle):
 
     # Right
-    if circle.position[0] + circle.radius > 11.0:
+    if circle.position[0] + circle.radius*0.5 > 11.0:
         circle.velocity[0] = -abs(circle.velocity[0])
 
     # Left
-    if circle.position[0] < -11.0 + circle.radius:
+    if circle.position[0] < -11.0 + circle.radius*0.5:
         circle.velocity[0] = abs(circle.velocity[0])
 
     # Top
-    if circle.position[1] > 5.0 - circle.radius:
+    if circle.position[1] > 5.0 - circle.radius*0.5:
         circle.velocity[1] = -abs(circle.velocity[1])
 
     # Bottom
-    if circle.position[1] < -5.0 + circle.radius:
+    if circle.position[1] < -5.0 + circle.radius*0.5:
         circle.velocity[1] = abs(circle.velocity[1])
 
 def on_key(window, key, scancode, action, mods):
@@ -156,10 +156,8 @@ def on_key(window, key, scancode, action, mods):
     
     global controller
 
-    if key == glfw.KEY_SPACE:
-        controller.fillPolygon = not controller.fillPolygon
 
-    elif key == glfw.KEY_ESCAPE:
+    if key == glfw.KEY_ESCAPE:
         glfw.set_window_should_close(window, True)
 
     elif key == glfw.KEY_1:
@@ -207,7 +205,7 @@ if __name__ == "__main__":
     table = objr.readOBJ(getAssetPath('mesa3.obj'))
     gpuTable = createGPUShape(gouraudTexturePipeline, table)
     gpuTable.texture = es.textureSimpleSetup(
-        getAssetPath("texturaRed.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+        getAssetPath("texturaRed2.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
     
     #Bolas
     balls = []
@@ -281,6 +279,9 @@ if __name__ == "__main__":
         dt = t1 - t0
         t0 = t1
         deltaTime = perfMonitor.getDeltaTime()
+        bolaBlanca = balls[0]
+        posBolaBlanca = bolaBlanca.position
+        controller.movimiento = False
 
         if (glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS):
             camera_theta -= 2 * dt
@@ -308,13 +309,13 @@ if __name__ == "__main__":
             projection = tr.perspective(60, float(width)/float(height), 0.1, 400)
 
             # Setting up the view transform
-            R = 2
-            camX = R * np.sin(camera_theta)
-            camY = R * np.cos(camera_theta)
-            viewPos = np.array([0, 0, 7.5])
+            R = 5
+            camX = -R * np.sin(camera_theta) + posBolaBlanca[0]
+            camY = -R * np.cos(camera_theta) + posBolaBlanca[1]
+            viewPos = np.array([camX, camY, 10])
             view = tr.lookAt(
                 viewPos,
-                np.array([camX,camY,7.5]),
+                posBolaBlanca,
                 np.array([0,0,1])
             )
 
@@ -326,12 +327,18 @@ if __name__ == "__main__":
             # checking and processing collisions among spheres
             collideWithBorder(ball)
 
+            if np.linalg.norm(ball.velocity) > 0:
+                controller.movimiento = True
+
         # checking and processing collisions among spheres
         for i in range(len(balls)):
             for j in range(i+1, len(balls)):
                 if areColliding(balls[i], balls[j]):
                     collide(balls[i], balls[j])
 
+        # Golpe
+        if (glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS) and  not controller.movimiento:
+            bolaBlanca.velocity = np.array([np.sin(camera_theta),np.cos(camera_theta), 0.0])*10
 
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -373,12 +380,12 @@ if __name__ == "__main__":
         glUniform3f(glGetUniformLocation(phongSimplePipeline.shaderProgram, "Kd"), 0.8, 0.8, 0.8)
         glUniform3f(glGetUniformLocation(phongSimplePipeline.shaderProgram, "Ks"), 0.5, 0.5, 0.5)
 
-        glUniform1ui(glGetUniformLocation(phongSimplePipeline.shaderProgram, "shininess"), 100)
+        glUniform1ui(glGetUniformLocation(phongSimplePipeline.shaderProgram, "shininess"), 10)
         glUniform1f(glGetUniformLocation(phongSimplePipeline.shaderProgram, "constantAttenuation"), 0.001)
         glUniform1f(glGetUniformLocation(phongSimplePipeline.shaderProgram, "linearAttenuation"), 0.1)
         glUniform1f(glGetUniformLocation(phongSimplePipeline.shaderProgram, "quadraticAttenuation"), 0.01)
 
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "lightPosition"), 0, 0, 8)
+        glUniform3f(glGetUniformLocation(phongSimplePipeline.shaderProgram, "lightPosition"), 0, 0, 15)
         glUniformMatrix4fv(glGetUniformLocation(phongSimplePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
         glUniform3f(glGetUniformLocation(phongSimplePipeline.shaderProgram, "viewPosition"), viewPos[0], viewPos[1], viewPos[2])
         glUniformMatrix4fv(glGetUniformLocation(phongSimplePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
