@@ -34,6 +34,7 @@ class Controller:
         self.temblor = False
         self.temblor2 = False
         self.carga = 1
+        self.temperatura = False 
 
 # We will use the global controller as communication with the callback function
 controller = Controller()
@@ -49,18 +50,23 @@ def createGPUShape(pipeline, shape):
 
 class Ball:
     def __init__(self, pipeline, position, velocity,r,g,b):
-        shape = sp.createColorNormalSphere(20,r,g,b)
+        if r != -2:
+            shape = sp.createColorNormalSphere(20,r,g,b)
+        else:      #Caso de bola blanca
+            shape = sp.createTextureNormalSphere(20)
         # addapting the size of the circle's vertices to have a circle
         # with the desired radius
         scaleFactor = 2 * RADIUS
-        bs.scaleVertices(shape, 9, (scaleFactor, scaleFactor, scaleFactor))
+        if pipeline == phongSimplePipeline:
+            bs.scaleVertices(shape, 9, (scaleFactor, scaleFactor, scaleFactor))
+        else:
+            bs.scaleVertices(shape, 8, (scaleFactor, scaleFactor, scaleFactor))
         self.pipeline = pipeline
         self.gpuShape = createGPUShape(self.pipeline, shape)
         self.position = position
         self.radius = RADIUS
         self.velocity = velocity
         self.mesa = True
-        self.temp = 0
 
     def action(self, deltaTime):
         # Euler integration
@@ -172,11 +178,14 @@ def on_key(window, key, scancode, action, mods):
     elif key == glfw.KEY_1:
         controller.viewTop = not controller.viewTop
     
-    elif key == glfw.KEY_A:
+    elif key == glfw.KEY_A and not controller.movimiento:
         controller.accurate = not controller.accurate
     
-    elif key == glfw.KEY_T:
+    elif key == glfw.KEY_T and not controller.movimiento:
         controller.temblor = True
+
+    elif key == glfw.KEY_K and not controller.movimiento:
+        controller.temperatura = not controller.temperatura
 
 
 
@@ -280,24 +289,31 @@ if __name__ == "__main__":
     ]
 
     velocityBall = [
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64),
-        np.array([random.uniform(-3, 3),random.uniform(-3, 3),0],dtype= np.float64)
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64),
+        np.array([random.uniform(-5, 5),random.uniform(-5, 5),0],dtype= np.float64)
     ]
-    for i in range(16):
+
+    #Bola blanca
+    balls.append(Ball(phongTexturePipeline, positionBalls[0], np.array([0.0, 0.0, 0.0]), -2, colorBalls[0][1], colorBalls[0][2]))
+    balls[0].gpuShape.texture = es.textureSimpleSetup(
+        getAssetPath("blanco.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+
+    #Resto de bolas
+    for i in range(1,16):
         bola = Ball(phongSimplePipeline, positionBalls[i], np.array([0.0, 0.0, 0.0]), colorBalls[i][0], colorBalls[i][1], colorBalls[i][2])
         balls.append(bola)
 
@@ -370,6 +386,7 @@ if __name__ == "__main__":
                 np.array([0,0,1]),
                 np.array([0,0,1])
             )
+
         if not controller.viewTop: 
             # Setting up the projection transform
             projection = tr.perspective(60, float(width)/float(height), 0.1, 400)
@@ -407,6 +424,25 @@ if __name__ == "__main__":
                 if (ball.position[0] - hoyos[j][0])**2 + (ball.position[1] - hoyos[j][1])**2 <= 1**2:
                     ball.mesa = False
                     balls.remove(ball)
+
+        ballIntensity = np.linalg.norm(bolaBlanca.velocity)
+
+        if controller.temperatura:
+            if ballIntensity >= 8:
+                balls[0].gpuShape.texture = es.textureSimpleSetup(
+                    getAssetPath("temp1.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+            elif ballIntensity >= 6:
+                balls[0].gpuShape.texture = es.textureSimpleSetup(
+                    getAssetPath("temp2.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+            elif ballIntensity >= 4:
+                balls[0].gpuShape.texture = es.textureSimpleSetup(
+                    getAssetPath("temp3.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+            elif ballIntensity >= 2:
+                balls[0].gpuShape.texture = es.textureSimpleSetup(
+                    getAssetPath("temp4.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+            elif ballIntensity == 0:
+                balls[0].gpuShape.texture = es.textureSimpleSetup(
+                    getAssetPath("blanco.jpg"), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
 
         # checking and processing collisions among spheres
         for i in range(len(balls)):
@@ -490,9 +526,30 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(phongSimplePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
         glUniform3f(glGetUniformLocation(phongSimplePipeline.shaderProgram, "viewPosition"), viewPos[0], viewPos[1], viewPos[2])
         glUniformMatrix4fv(glGetUniformLocation(phongSimplePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-        for i in range(len(balls)):
+        for i in range(1,len(balls)):
             balls[i].draw()
         
+        # Drawing White ball
+        glUseProgram(phongTexturePipeline.shaderProgram)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "La"), 0.85, 0.85, 0.85)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ld"), 0.8, 0.8, 0.8)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ls"), 0.6, 0.6, 0.6)
+
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ka"), 0.8, 0.8, 0.8)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Kd"), 0.8, 0.8, 0.8)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ks"), 0.5, 0.5, 0.5)
+
+        glUniform1ui(glGetUniformLocation(phongTexturePipeline.shaderProgram, "shininess"), 10)
+        glUniform1f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "constantAttenuation"), 0.001)
+        glUniform1f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "linearAttenuation"), 0.1)
+        glUniform1f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "quadraticAttenuation"), 0.01)
+
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "lightPosition"), 0, 0, 15)
+        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "viewPosition"), viewPos[0], viewPos[1], viewPos[2])
+        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+        balls[0].draw()
+
     
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
         glfw.swap_buffers(window)
