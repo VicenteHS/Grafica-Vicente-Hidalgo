@@ -906,12 +906,12 @@ class MultipleTexturePhongShaderProgram:
 
             out vec4 fragColor;
             // Posiciones de las fuentes de luz
-            vec3 lightPos0 = vec3(110f, 50f, 72); 
-            vec3 lightPos1 = vec3(0f, 50f, 72f); 
-            vec3 lightPos2 = vec3(-110f, 50f, 72f); 
-            vec3 lightPos3 = vec3(110f, -50f, 72f);
-            vec3 lightPos4 = vec3(0f, -50f, 72f);
-            vec3 lightPos5 = vec3(-110f, -50f, 72f);
+            vec3 lightPos0 = vec3(11f, 5f, 10); 
+            vec3 lightPos1 = vec3(0f, 5f, 10f); 
+            vec3 lightPos2 = vec3(-11f, 5f, 10f); 
+            vec3 lightPos3 = vec3(11f, -5f, 10f);
+            vec3 lightPos4 = vec3(0f, -5f, 10f);
+            vec3 lightPos5 = vec3(-11f, -5f, 10f);
 
             uniform vec3 viewPosition; 
             uniform vec3 La;
