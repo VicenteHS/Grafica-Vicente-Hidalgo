@@ -35,7 +35,8 @@ class Controller:
         self.temblor = False
         self.temblor2 = False
         self.accurate = False
-        self.temperatura = False 
+        self.temperatura = False
+        self.camara2 = False
         # # # self.trayectoria = True
         # # # self.made = False
         # # # self.made2 = False
@@ -193,6 +194,9 @@ def on_key(window, key, scancode, action, mods):
     elif key == glfw.KEY_K and not controller.movimiento:
         controller.temperatura = not controller.temperatura
 
+    elif key == glfw.KEY_2:
+        controller.camara2 = not controller.camara2
+
 
 
 
@@ -206,7 +210,7 @@ def create_floor(pipeline):
     gpuFloor.fillBuffers(shapeFloor.vertices, shapeFloor.indices, GL_STATIC_DRAW)
 
     floor = sg.SceneGraphNode("floor")
-    floor.transform = tr.matmul([tr.translate(0, 0, 0),tr.scale(100,100,100)])
+    floor.transform = tr.matmul([tr.translate(0, 0, 0),tr.scale(150,150,150)])
     floor.childs += [gpuFloor]
 
     return floor
@@ -218,7 +222,7 @@ def create_skybox(pipeline):
     pipeline.setupVAO(gpuFirstSky)
     gpuFirstSky.fillBuffers(shapeFirstSky.vertices, shapeFirstSky.indices, GL_STATIC_DRAW)
     gpuFirstSky.texture = es.textureSimpleSetup(
-        getAssetPath("temp1.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+        getAssetPath("Fondo 2.png"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
     
     #################################################################################################
     shapeSecondSky = bs.createTextureQuad(1,1)
@@ -226,7 +230,7 @@ def create_skybox(pipeline):
     pipeline.setupVAO(gpuSecondSky)
     gpuSecondSky.fillBuffers(shapeSecondSky.vertices, shapeSecondSky.indices, GL_STATIC_DRAW)
     gpuSecondSky.texture = es.textureSimpleSetup(
-        getAssetPath("temp2.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+        getAssetPath("Fondo 2.png"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
     ####################################################################################################
 
     shpeThirdSky = bs.createTextureQuad(1,1)
@@ -234,7 +238,7 @@ def create_skybox(pipeline):
     pipeline.setupVAO(gpuThirdSky)
     gpuThirdSky.fillBuffers(shpeThirdSky.vertices, shpeThirdSky.indices, GL_STATIC_DRAW)
     gpuThirdSky.texture = es.textureSimpleSetup(
-        getAssetPath("temp3.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+        getAssetPath("Fondo 2.png"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
     ####################################################################################################
 
     shapeFourthSky = bs.createTextureQuad(1,1)
@@ -242,27 +246,31 @@ def create_skybox(pipeline):
     pipeline.setupVAO(gpuFourthSky)
     gpuFourthSky.fillBuffers(shapeFourthSky.vertices, shapeFourthSky.indices, GL_STATIC_DRAW)
     gpuFourthSky.texture = es.textureSimpleSetup(
-        getAssetPath("temp4.jpg"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+        getAssetPath("Fondo 2.png"), GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
     ####################################################################################################
     
 
     firstSky = sg.SceneGraphNode("firstSky")
-    firstSky.transform = tr.matmul([tr.translate(-30, 0, 10), tr.rotationX(0), tr.rotationY(math.pi/2), tr.uniformScale(40)])
+    firstSky.transform = tr.matmul([
+        tr.translate(-60, 0, 40), tr.rotationX(0), tr.rotationY(math.pi/2), tr.rotationZ(np.pi/2), tr.uniformScale(80)])
     firstSky.childs += [gpuFirstSky]
 
     ##########################################################
     secondSky = sg.SceneGraphNode("secondSky")
-    secondSky.transform = tr.matmul([tr.translate(0, 20, 10), tr.rotationX(math.pi/2), tr.rotationY(0), tr.uniformScale(80)])
+    secondSky.transform = tr.matmul([
+        tr.translate(0, 40, 80), tr.rotationX(math.pi/2), tr.rotationY(0), tr.rotationZ(0),tr.uniformScale(160)])
     secondSky.childs += [gpuSecondSky]
 
     ##########################################################
     thirdSky = sg.SceneGraphNode("thirdSky")
-    thirdSky.transform = tr.matmul([tr.translate(30, 0, 10), tr.rotationX(0), tr.rotationY(-math.pi/2), tr.uniformScale(40)])
+    thirdSky.transform = tr.matmul([
+        tr.translate(60, 0, 40), tr.rotationX(0), tr.rotationY(-math.pi/2), tr.rotationZ(-np.pi/2),tr.uniformScale(80)])
     thirdSky.childs += [gpuThirdSky]
 
     ##########################################################
     fourthSky = sg.SceneGraphNode("fourthSky")
-    fourthSky.transform = tr.matmul([tr.translate(0, -20, 10), tr.rotationX(-math.pi/2), tr.rotationY(0), tr.uniformScale(80)])
+    fourthSky.transform = tr.matmul([
+        tr.translate(0, -40, 80), tr.rotationX(-math.pi/2), tr.rotationY(0), tr.rotationZ(np.pi),tr.uniformScale(160)])
     fourthSky.childs += [gpuFourthSky]
 
     newSkybox = sg.SceneGraphNode("newSkybox")
@@ -459,35 +467,51 @@ if __name__ == "__main__":
             if (glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS):
                 camera_theta += 0.1* dt
         
-        if controller.viewTop:
-            # Setting up the projection transform
-            projection = tr.ortho(-12.5, 12.5, -6.5, 6.5, 0.1, 200)
+        if not controller.camara2:
+            if controller.viewTop:
+                # Setting up the projection transform
+                projection = tr.ortho(-12.5, 12.5, -6.5, 6.5, 0.1, 200)
 
-            # Setting up the view transform
-            R = 0.00001
-            camX = R * np.sin(np.pi)
-            camY = R * np.cos(np.pi)
-            viewPos = np.array([camX, camY, 17])
-            view = tr.lookAt(
-                viewPos,
-                np.array([0,0,1]),
-                np.array([0,0,1])
-            )
+                # Setting up the view transform
+                R = 0.00001
+                camX = R * np.sin(np.pi)
+                camY = R * np.cos(np.pi)
+                viewPos = np.array([camX, camY, 17])
+                view = tr.lookAt(
+                    viewPos,
+                    np.array([0,0,1]),
+                    np.array([0,0,1])
+                )
 
-        if not controller.viewTop: 
+            if not controller.viewTop: 
+                # Setting up the projection transform
+                projection = tr.perspective(60, float(width)/float(height), 0.1, 400)
+
+                # Setting up the view transform
+                R = 5
+                camX = -R * np.sin(camera_theta) + posBolaBlanca[0]
+                camY = -R * np.cos(camera_theta) + posBolaBlanca[1]
+                viewPos = np.array([camX, camY, 10])
+                view = tr.lookAt(
+                    viewPos,
+                    posBolaBlanca,
+                    np.array([0,0,1])
+                )
+        else:
             # Setting up the projection transform
             projection = tr.perspective(60, float(width)/float(height), 0.1, 400)
 
             # Setting up the view transform
-            R = 5
+            R = 15
             camX = -R * np.sin(camera_theta) + posBolaBlanca[0]
             camY = -R * np.cos(camera_theta) + posBolaBlanca[1]
-            viewPos = np.array([camX, camY, 10])
+            viewPos = np.array([camX, camY, 12])
             view = tr.lookAt(
                 viewPos,
                 posBolaBlanca,
                 np.array([0,0,1])
             )
+
 
         if controller.temblor and not controller.temblor2:
             for i in range(1,len(balls)):
