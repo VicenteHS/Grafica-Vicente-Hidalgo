@@ -20,7 +20,13 @@ import grafica.sphere as sp
 import math
 import trayectoria
 import displacement_view as dv
+import json
 
+
+# config = sys.argv[1]
+# type(config)
+# f = open(config,"r")
+# dic = json.loads(f.read())
 
 CIRCLE_DISCRETIZATION = 20
 RADIUS = 0.6
@@ -39,6 +45,7 @@ class Controller:
         self.temperatura = False
         self.camara2 = False
         self.shearing = True
+        self.activateColissionFlecha = False
         # # # self.trayectoria = True
         # # # self.made = False
         # # # self.made2 = False
@@ -749,14 +756,24 @@ if __name__ == "__main__":
             mvpTexturePipeline.drawCall(gpuTaco)
 
             if controller.accurate:
-                glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
-                    tr.translate(posBolaBlanca[0], posBolaBlanca[1], posBolaBlanca[2]),
-                    tr.rotationZ(-camera_theta),
-                    tr.rotationY(0),
-                    tr.rotationX(np.pi/2),
-                    tr.scale(0.1, 0.5, 1)
-                ]))
-                mvpTexturePipeline.drawCall(gpuFlecha)
+                if not controller.activateColissionFlecha:
+                    glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                        tr.translate(posBolaBlanca[0], posBolaBlanca[1], posBolaBlanca[2]),
+                        tr.rotationZ(-camera_theta),
+                        tr.rotationY(0),
+                        tr.rotationX(np.pi/2),
+                        tr.scale(0.1, 0.5, 1)
+                    ]))
+                    mvpTexturePipeline.drawCall(gpuFlecha)
+                else:
+                    glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, tr.matmul([
+                        tr.translate(posBolaBlanca[0], posBolaBlanca[1], posBolaBlanca[2]),
+                        tr.rotationZ(-camera_theta),
+                        tr.rotationY(0),
+                        tr.rotationX(np.pi/2),
+                        tr.scale(0.1, 0.5, 1)
+                    ]))
+                    mvpTexturePipeline.drawCall(gpuFlecha)
 
         # Drawing balls
         glUseProgram(phongSimplePipeline.shaderProgram)
