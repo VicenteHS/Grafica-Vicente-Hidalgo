@@ -23,15 +23,15 @@ import displacement_view as dv
 import json
 
 
-# config = sys.argv[1]
-# type(config)
-# f = open(config,"r")
-# dic = json.loads(f.read())
+config = sys.argv[1]
+type(config)
+f = open(config,"r")
+dic = json.loads(f.read())
 
 CIRCLE_DISCRETIZATION = 20
 RADIUS = 0.6
-COEF_FRICTION = 0.2
-COEF_RESTITUCION = 1
+COEF_FRICTION = dic["COEF_FRICTION"]
+COEF_RESTITUCION = dic["COEF_RESTITUCION"]
 
 # A class to store the application control
 class Controller:
